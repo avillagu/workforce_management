@@ -1,0 +1,124 @@
+TAREA 1: Diseño de Base de Datos
+DESCRIPCIÓN: Crear el script init_db.sql con la tabla de usuarios.
+AGENTE RESPONSABLE: DBA
+INPUTS: architecture.txt
+OUTPUTS ESPERADOS: init_db.sql
+ESTADO: Terminado (Optimizado)
+
+---
+TAREA 2: API de Autenticación
+ESTADO: Terminado (Optimizado)
+
+---
+TAREA 3: Interfaz Angular y Sidebar
+ESTADO: Terminado (Optimizado)
+
+================================================================================
+ETAPA 3 — PROGRAMACIÓN DE TURNOS
+================================================================================
+
+TAREA 4: API de Turnos (Backend)
+DESCRIPCIÓN: Implementar CRUD de turnos, programación masiva, validación de superposiciones y WebSocket.
+AGENTE RESPONSABLE: Backend Developer
+INPUTS:
+  - architecture_erd.md
+  - 03_etapa3_programacion.txt
+  - prompt_backend_etapa3.txt
+OUTPUTS ESPERADOS:
+  - backend/src/routes/turnos.js
+  - backend/src/controllers/turnosController.js
+  - backend/src/services/turnosService.js
+  - backend/src/websocket/turnosSocket.js
+  - Swagger actualizado en /api-docs
+ESTADO: ✅ Completado
+
+---
+TAREA 5: Calendario de Programación (Frontend)
+DESCRIPCIÓN: Desarrollar interfaz de calendario con vistas semanal/mensual, modales de programación y tiempo real.
+AGENTE RESPONSABLE: Frontend Developer
+INPUTS:
+  - 03_etapa3_programacion.txt
+  - prompt_frontend_etapa3.txt
+  - Endpoints de API (Tarea 4)
+OUTPUTS ESPERADOS:
+  - programacion.component.ts/html/scss
+  - turnos.service.ts
+  - turnos-socket.service.ts
+  - Dialogs: programar-turno, programar-masivo, ver-turno
+  - turno.model.ts
+ESTADO: ✅ Completado
+
+---
+TAREA 6: Integración y Pruebas
+DESCRIPCIÓN: Validar integración frontend-backend, pruebas de tiempo real y tests manuales.
+AGENTE RESPONSABLE: Fullstack Developer
+INPUTS:
+  - Tarea 4 completada
+  - Tarea 5 completada
+OUTPUTS ESPERADOS:
+  - Pruebas de CRUD de turnos documentadas
+  - Pruebas de tiempo real validadas
+  - log.txt con evidencia de pruebas
+ESTADO: ✅ Completado (Pruebas manuales aprobadas - 23 de marzo de 2026)
+
+================================================================================
+ETAPA 4 — ASISTENCIAS (EN DEFINICIÓN)
+================================================================================
+
+TAREA 7: Diseño de Base de Datos - Asistencias
+DESCRIPCIÓN: Crear tabla asistencias en init_db.sql con estados y relaciones.
+AGENTE RESPONSABLE: DBA
+INPUTS:
+  - architecture_erd.md
+  - 04_etapa4_asistencias.txt
+OUTPUTS ESPERADOS:
+  - init_db.sql actualizado con tabla asistencias
+  - Diccionario de datos de la tabla
+ESTADO: ⏳ Pendiente
+
+---
+TAREA 8: API de Asistencias (Backend)
+DESCRIPCIÓN: Implementar API para marcación de estados, historial, cálculos de tiempo y WebSocket.
+AGENTE RESPONSABLE: Backend Developer
+INPUTS:
+  - architecture_erd.md
+  - 04_etapa4_asistencias.txt
+  - prompt_backend_etapa4 (por crear)
+OUTPUTS ESPERADOS:
+  - backend/src/routes/asistencias.js
+  - backend/src/controllers/asistenciasController.js
+  - backend/src/services/asistenciasService.js
+  - backend/src/websocket/asistenciasSocket.js (integrado con turnosSocket)
+  - Swagger actualizado en /api-docs
+ESTADO: ⏳ Pendiente
+
+---
+TAREA 9: Panel de Asistencias (Frontend)
+DESCRIPCIÓN: Desarrollar interfaz de marcación para empleados y vista de monitoreo para admin/supervisor.
+AGENTE RESPONSABLE: Frontend Developer
+INPUTS:
+  - 04_etapa4_asistencias.txt
+  - prompt_frontend_etapa4 (por crear)
+  - Endpoints de API (Tarea 8)
+OUTPUTS ESPERADOS:
+  - asistencias.component.ts/html/scss (panel empleado)
+  - monitoreo-asistencias.component.ts/html/scss (vista admin/supervisor)
+  - asistencias.service.ts
+  - asistencias-socket.service.ts (integrado con turnos-socket)
+  - estado.model.ts
+  - export-asistencias-dialog.component.ts
+ESTADO: ⏳ Pendiente
+
+---
+TAREA 10: Integración y Pruebas - Etapa 4
+DESCRIPCIÓN: Validar integración frontend-backend, pruebas de tiempo real y tests manuales.
+AGENTE RESPONSABLE: Fullstack Developer
+INPUTS:
+  - Tarea 8 completada
+  - Tarea 9 completada
+OUTPUTS ESPERADOS:
+  - Pruebas de marcación de estados documentadas
+  - Pruebas de tiempo real validadas
+  - Pruebas de exportación Excel validadas
+  - log.txt con evidencia de pruebas
+ESTADO: ⏳ Pendiente

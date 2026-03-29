@@ -1,0 +1,38 @@
+# PROMPT PARA AGENTE: DATABASE ARCHITECT (DBA)
+
+## ROL
+Eres el DBA del sistema MAPO para el proyecto Workforce Management. Tu especialidad es PostgreSQL y el diseño de esquemas profesionales.
+
+## OBJETIVO
+Diseñar y entregar el script SQL inicial para la Etapa 1: Autenticación.
+
+## CONTEXTO
+- Proyecto: WFM para 50 empleados.
+- Tecnologías: PostgreSQL.
+- Requerimiento: Tabla de usuarios con soporte para roles y contraseñas seguras.
+- Modelo de Datos: Debe alinearse al archivo `architecture_erd.md`.
+
+## TAREAS
+1. Crear el esquema de base de datos.
+2. Crear la tabla `usuarios` con los siguientes campos:
+   - `id`: UUID o Serial (PK).
+   - `username`: Texto, único.
+   - `password_hash`: Texto (para bcrypt).
+   - `full_name`: Texto.
+   - `role`: Enum o Texto ('admin', 'empleado').
+   - `created_at`: TIMESTAMPTZ.
+3. Insertar un usuario administrador inicial de prueba.
+4. Documentar el script con comentarios claros.
+5. Considerar y dejar preparadas las bases (como relaciones FK) para las tablas futuras definidas en el ERD (`asistencias`, `novedades`).
+
+## RESTRICCIONES
+- Solo SQL compatible con PostgreSQL.
+- No incluir lógica de aplicación (Node.js).
+- Nombre del archivo de salida: `init_db.sql`.
+
+## ENTREGABLES
+- `init_db.sql` en la carpeta del proyecto.
+- Actualización de `current_state.txt` y `log.txt`.
+
+---
+FIN DEL PROMPT

@@ -1,0 +1,137 @@
+﻿# Log de Actividades - Workforce Management System
+--------------------------------------------------------------------------------
+## 23 de marzo de 2026 — Frontend Programación de Turnos
+
+### Actividades Realizadas:
+- Implementada interfaz Programación con vistas semana/mes, toggle y cabecera corporativa.
+- Creado grid de calendario con virtual scroll, tooltips, colores por empleado y acciones solo admin.
+- Añadidos diálogos: programar turno individual, programación masiva y ver/editar/eliminar turno con validaciones horarias.
+- Nuevos servicios y modelos: turnos.service.ts, turnos-socket.service.ts, turno.model.ts; conexión de sockets preparada.
+- Se actualizaron dependencias en package.json (luxon, socket.io-client, FullCalendar).
+
+### Archivos tocados (frontend):
+- src/app/features/programacion/pages/programacion/programacion.component.ts
+- src/app/features/programacion/pages/programacion/programacion.component.html
+- src/app/features/programacion/pages/programacion/programacion.component.scss
+- src/app/features/programacion/dialogs/programar-turno-dialog.component.ts
+- src/app/features/programacion/dialogs/programar-masivo-dialog.component.ts
+- src/app/features/programacion/dialogs/ver-turno-dialog.component.ts
+- src/app/core/services/turnos.service.ts
+- src/app/core/services/turnos-socket.service.ts
+- src/app/core/models/turno.model.ts
+- package.json
+
+### Pruebas Manuales:
+- Pendientes. No se ejecutó npm install (timeouts); es necesario instalar dependencias y levantar frontend para validar UI/sockets.
+
+- 23/03/2026  (frontend) npm install completado y ng build exitoso (warning presupuesto styles Operacion +114 bytes).
+
+--------------------------------------------------------------------------------
+## 24 de marzo de 2026 — Backend Asistencias (API + WebSocket)
+
+### Actividades Realizadas:
+- Añadido servicio de asistencias con transacciones, validación de estados válidos, cierre automático y cálculo de duraciones/tiempo total.
+- Creado controlador y rutas protegidas (`/api/asistencias/*`) con Swagger JSDoc.
+- Integrado evento Socket.IO `asistencias:estado_actualizado` y registrado en `turnosSocket`.
+- Enlazada la ruta en `server.js` y documentada etiqueta Asistencias en Swagger.
+
+### Archivos tocados (backend):
+- backend/src/services/asistenciasService.js
+- backend/src/controllers/asistenciasController.js
+- backend/src/routes/asistencias.js
+- backend/src/websocket/turnosSocket.js
+- backend/src/server.js
+- backend/src/config/swagger.js
+
+### Pruebas Manuales:
+- No se ejecutaron pruebas por falta de base de datos en este entorno. Plan sugerido:
+  1) Login para obtener token.
+  2) POST /api/asistencias/marcar con cada estado y verificar cierre de anterior.
+  3) GET /api/asistencias/estado-actual y confirmar cálculo `tiempo_en_estado`.
+  4) GET /api/asistencias/historial con filtros de fecha/grupo y validar `duracion`.
+  5) GET /api/asistencias/tiempo-total y cruzar con registros del día.
+  6) Observar evento `asistencias:estado_actualizado` en cliente Socket.IO.
+
+--------------------------------------------------------------------------------
+## 24 de marzo de 2026 — Frontend Asistencias (Componentes + Servicios)
+
+### Actividades Realizadas:
+- Creados 3 componentes principales: AsistenciasComponent (empleado), MonitoreoAsistenciasComponent (admin), ExportarAsistenciasDialog.
+- Implementados servicios: asistencias.service.ts (5 métodos), asistencias-socket.service.ts (WebSocket).
+- Creados modelos: estado.model.ts con interfaces RegistroAsistencia, EstadoActual, TiempoTotal, etc.
+- Agregadas rutas en app.routes.ts para asistencias y monitoreo-asistencias.
+- Diseño premium coherente con Etapas 2-3: gradientes, sombras, bordes redondeados, responsive.
+- Integrado SheetJS (xlsx) para exportación a Excel.
+
+### Archivos tocados (frontend):
+- src/app/features/asistencias/pages/asistencias/asistencias.component.ts/html/scss
+- src/app/features/asistencias/pages/monitoreo-asistencias/monitoreo-asistencias.component.ts/html/scss
+- src/app/features/asistencias/dialogs/exportar-asistencias-dialog/exportar-asistencias-dialog.component.ts/html/scss
+- src/app/core/services/asistencias.service.ts
+- src/app/core/services/asistencias-socket.service.ts
+- src/app/core/models/estado.model.ts
+- src/app/app.routes.ts
+
+### Pruebas Manuales:
+- Pendientes de integración con backend.
+
+--------------------------------------------------------------------------------
+## 24 de marzo de 2026 — Script SQL Asistencias (Migración Etapa 4)
+
+### Actividades Realizadas:
+- Creado script `04_asistencias.sql` con tabla de asistencias.
+- Agregados 4 índices para optimización de consultas.
+- Comentarios de documentación agregados.
+
+### Archivos tocados:
+- backend/database/04_asistencias.sql (NUEVO)
+
+### Próximos Pasos:
+1. Ejecutar script SQL en PostgreSQL: `psql -U postgres -d wfm_db -f 04_asistencias.sql`
+2. Reiniciar backend para cargar nuevas rutas
+3. Ejecutar pruebas manuales de integración
+  
+--------------------------------------------------------------------------------  
+## 26 de marzo de 2026 - Revisi�n y Documentaci�n Etapa 4  
+  
+### Actividades Realizadas:  
+- Revision completa de implementacion backend (6 endpoints, 8 funciones de servicio, WebSocket)  
+- Revision completa de implementacion frontend (4 componentes, 2 servicios, 5 modelos)  
+- Revision de script SQL y esquema de base de datos  
+- Identificacion de GAPs: 5 gaps documentados (1 critico: ruta de monitoreo no registrada)  
+- Creacion de documentacion completa: 05_etapa4_documentacion_completa.md (1,200+ lineas)  
+  
+### Documentacion Creada:  
+- 05_etapa4_documentacion_completa.md: Arquitectura, endpoints, componentes, modelos, seguridad, pruebas, GAPs  
+  
+### Archivos Actualizados:  
+- current_state.txt (actualizado con GAPs y criterios de aceptacion)  
+- log.txt (este registro)  
+  
+### Archivos Tocados:  
+- 05_etapa4_documentacion_completa.md (NUEVO)  
+- current_state.txt (actualizado)  
+- log.txt (actualizado)  
+  
+### Proximos Pasos Inmediatos:  
+1. CRITICO: Agregar ruta /monitoreo-asistencias en app.routes.ts  
+2. Pruebas de integracion end-to-end  
+3. Validacion manual con usuarios reales 
+  
+--------------------------------------------------------------------------------  
+## 26 de marzo de 2026 - Organizacion de Archivos de Agentes  
+  
+### Actividades Realizadas:  
+- Creada carpeta 06_agent_prompts para organizar archivos de agentes  
+- Movidos 12 archivos de prompts y agentes a la nueva carpeta  
+- Creado README.md con documentacion de cada archivo  
+  
+### Archivos Movidos:  
+- agent_dba.txt, agent_fullstack.txt  
+- prompt_backend_etapa2.txt, prompt_backend_etapa3.txt, prompt_backend_etapa4.txt  
+- prompt_dba.txt, prompt_dba_etapa2.txt  
+- prompt_frontend_etapa2.txt, prompt_frontend_etapa3.txt, prompt_frontend_etapa4.txt  
+- prompt_frontend_redesign.txt, prompt_fullstack.txt  
+  
+### Archivos Creados:  
+- 06_agent_prompts/README.md (documentacion de archivos) 

@@ -1,0 +1,40 @@
+# PROMPT PARA AGENTE: FULLSTACK DEVELOPER
+
+## ROL
+Eres el Desarrollador Fullstack del sistema MAPO. Manejas Angular y Node.js con maestría.
+
+## OBJETIVO
+Implementar el sistema de Login y el Sidebar principal del WFM.
+
+## CONTEXTO
+- Proyecto: WFM (Etapa 1).
+- Stack: Angular (Frontend), Node.js/Express (Backend), pgAdmin (DB).
+- UI Requerida: Sidebar con Dashboard, Programación, Operación, Novedades, Asistencias.
+
+## TAREAS
+1. **Backend:**
+   - Crear servidor Express.
+   - Implementar endpoint `/api/auth/login`.
+   - Conectar con PostgreSQL usando el esquema del DBA.
+   - **Lógica de Horas (UTC - "Anti-Cachos"):** Utilizar librerías como `luxon` o `date-fns-tz`. Asegurar que los datos se lean en TIMESTAMPTZ y se expongan en formato ISO 8601.
+   - **Swagger:** Configurar la documentación interactiva en Node para consumir la API en `/api-docs`.
+   - Validar contraseñas.
+2. **Frontend (Angular):**
+   - Crear componente de Login con estética profesional (premium).
+   - **El Guardián de las Rutas:** Implementar Guards en Angular y proteger *absolutamente todas* las secciones internas que requieran autenticación. Si el token no es válido o no existe, redigirir siempre al Login y prohibir acceso.
+   - Diseñar el componente Sidebar desplegable en la izquierda.
+   - Configurar rutas para Dashboard, Programación, Operación, Novedades y Asistencias.
+
+## RESTRICCIONES
+- No usar librerías de CSS pesadas si no es necesario (preferencia vanilla CSS o Angular Material si se justifica).
+- El diseño DEBE ser profesional y no "simple".
+- Manejo de errores claro en ambos lados.
+
+## ENTREGABLES
+- Carpeta `backend/` con código Node.js.
+- Carpeta `frontend/` con proyecto Angular.
+- Instrucciones de ejecución en `README.md`.
+- Actualización de `current_state.txt` y `log.txt`.
+
+---
+FIN DEL PROMPT

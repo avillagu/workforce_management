@@ -1,0 +1,292 @@
+<div class="programacion-wrapper">
+  <mat-card class="operacion-card">
+    <mat-tab-group class="operacion-tabs" (selectedTabChange)="onTabChange($event.index)" dynamicHeight animationDuration="300ms">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">calendar_month</mat-icon>
+          <span class="tab-label">Calendario</span>
+        </ng-template>
+  
+        <div class="tab-content">
+          <!-- Header (Styled same as Operación) -->
+          <div class="tab-header">
+            <div class="header-info">
+              <mat-icon>event_note</mat-icon>
+              <div>
+                <h2>Planificación de Personal</h2>
+                <p>Gestione la programación semanal de turnos y descansos</p>
+              </div>
+            </div>
+  
+            <div class="header-actions">
+              <!-- No Admin View -->
+              <button mat-flat-button class="btn-add-mapo" *ngIf="isSupervisor() || isEmpleado()" (click)="onCambioTurno()">
+                <mat-icon>swap_horiz</mat-icon>
+                Cambio de Turno
+              </button>
+  
+              <!-- Admin View -->
+              <ng-container *ngIf="isAdmin()">
+                <button mat-flat-button class="btn-publish-mapo" (click)="publicarTurnos()" style="margin-right: 10px;">
+                  <mat-icon>publish</mat-icon>
+                  Publicar Turnos
+                </button>
+                <button mat-flat-button class="btn-delete-mapo" (click)="onEliminarTurnos()" style="margin-right: 10px;">
+                  <mat-icon>delete_sweep</mat-icon>
+                  Eliminar Turnos
+                </button>
+                <button mat-flat-button class="btn-smart-mapo" (click)="onProgramacionInteligente()" style="margin-right: 10px;">
+                  <mat-icon>auto_awesome</mat-icon>
+                  Programación Inteligente
+                </button>
+                <button mat-flat-button class="btn-add-mapo" (click)="onProgramarTurnos()">
+                  <mat-icon>event_available</mat-icon>
+                  Programar Turnos
+                </button>
+              </ng-container>
+            </div>
+          </div>
+  
+          <mat-divider style="margin-bottom: 24px;"></mat-divider>
+  
+          <!-- Calendar Controls -->
+          <div class="controls-card">
+            <div class="controls-left">
+              <div class="nav-group">
+                <button mat-flat-button class="today-btn" (click)="goToday()" [disabled]="loadingTurnos()">
+                  Hoy
+                </button>
+                <button mat-icon-button (click)="goPrev()" [disabled]="loadingTurnos()">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                
+                <div class="datepicker-trigger" (click)="picker.open()">
+                  <span class="range-label">{{ rangeLabel() }}</span>
+                  <mat-icon class="picker-icon">calendar_month</mat-icon>
+                  <input matInput [matDatepicker]="picker" [value]="anchorDate().toJSDate()" (dateChange)="onDateChange($event.value)" style="display:none">
+                  <mat-datepicker #picker></mat-datepicker>
+                </div>
+  
+                <button mat-icon-button (click)="goNext()" [disabled]="loadingTurnos()">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+            </div>
+  
+            <div class="controls-right" style="display: flex; gap: 12px;">
+              <button 
+                mat-stroked-button 
+                class="export-btn" 
+                (click)="onExportar()"
+                [disabled]="loadingTurnos() || filteredEmpleados().length === 0"
+              >
+                <mat-icon>file_download</mat-icon>
+                <span>Exportar Excel</span>
+              </button>
+
+              <button 
+                mat-flat-button 
+                class="group-pill-btn" 
+                [matMenuTriggerFor]="groupMenu"
+              >
+                <div class="pill-content">
+                  <mat-icon class="pill-icon">groups</mat-icon>
+                  <span class="pill-label">{{ getSelectedGrupoName() }}</span>
+                  <mat-icon class="pill-chevron">expand_more</mat-icon>
+                </div>
+              </button>
+  
+              <mat-menu #groupMenu="matMenu" class="premium-selector-menu">
+                <button mat-menu-item (click)="onGrupoFilterChange('')" [class.active-item]="!selectedGrupoId()">
+                  <mat-icon>all_inclusive</mat-icon>
+                  <span>Todos los Grupos</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button 
+                  mat-menu-item 
+                  *ngFor="let g of grupos()" 
+                  (click)="onGrupoFilterChange(g.id)"
+                  [class.active-item]="selectedGrupoId() === g.id"
+                >
+                  <mat-icon>group_work</mat-icon>
+                  <span>{{ g.nombre }}</span>
+                </button>
+              </mat-menu>
+            </div>
+          </div>
+  
+          <!-- Calendar Grid Container -->
+          <div class="calendar-card">
+            <div class="loading-overlay" *ngIf="loadingEmpleados() || loadingTurnos()">
+              <mat-progress-spinner diameter="46" mode="indeterminate"></mat-progress-spinner>
+              <p>Cargando programación...</p>
+            </div>
+  
+            <div class="calendar-grid" [class.blur]="loadingEmpleados() || loadingTurnos()" cdkDropListGroup>
+              <div class="calendar-header">
+                <div class="name-col sticky">Empleado</div>
+                <div
+                  class="day-col"
+                  [class.today]="dia.isToday"
+                  [class.weekend]="dia.isWeekend"
+                  *ngFor="let dia of days(); trackBy: trackDia"
+                >
+                  <span class="day-label">{{ dia.label }}</span>
+                </div>
+              </div>
+  
+              <cdk-virtual-scroll-viewport
+                itemSize="72"
+                class="rows-viewport"
+                *ngIf="filteredEmpleados().length > 0"
+              >
+                <div
+                  class="calendar-row"
+                  *cdkVirtualFor="let emp of filteredEmpleados(); trackBy: trackEmpleado"
+                >
+                  <div class="name-col sticky">
+                    <div class="avatar" [class.is-mine]="emp.id === currentUserId()">
+                      {{ emp.nombre_completo.slice(0, 2).toUpperCase() }}
+                    </div>
+                    <div class="emp-meta">
+                      <span class="emp-name">{{ emp.nombre_completo }}</span>
+                      <small class="emp-username">&#64;{{ emp.username }}</small>
+                    </div>
+                  </div>
+  
+                  <div
+                    class="day-col"
+                    [class.weekend]="dia.isWeekend"
+                    [class.today]="dia.isToday"
+                    *ngFor="let dia of days(); trackBy: trackDia"
+                    cdkDropList
+                    [cdkDropListData]="{ empId: emp.id, date: dia.date.toISODate() }"
+                    (cdkDropListDropped)="onDrop($event)"
+                    (click)="onCellClick(emp, dia)"
+                  >
+                    <div class="turnos-slot">
+                      <ng-container *ngFor="let turno of getTurnosFor(emp.id, dia.date); trackBy: trackTurno">
+                        <div
+                          class="turno-chip"
+                          cdkDrag
+                          [cdkDragData]="turno"
+                          [cdkDragDisabled]="!isAdmin()"
+                          [class]="'type-' + (turno.tipo || 'turno')"
+                          [class.is-mine]="emp.id === currentUserId()"
+                          [class.is-draft]="!turno.publicado"
+                          [matTooltip]="getTurnoLabel(turno) + (!turno.publicado ? ' (BORRADOR)' : '')"
+                          (click)="$event.stopPropagation(); isAdmin() ? openVerTurno(turno) : null"
+                        >
+                          <mat-icon *ngIf="!turno.publicado && isAdmin()" class="draft-indicator">lock_reset</mat-icon>
+                          <mat-icon *ngIf="turno.publicado || !isAdmin()">{{ getTurnoIcon(turno.tipo) }}</mat-icon>
+                          <span>{{ getTurnoLabel(turno) }}</span>
+                          <div *cdkDragPlaceholder class="turno-placeholder"></div>
+                        </div>
+                      </ng-container>
+  
+                      <button
+                        class="empty-cta"
+                        type="button"
+                        *ngIf="isAdmin() && getTurnosFor(emp.id, dia.date).length === 0"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </cdk-virtual-scroll-viewport>
+  
+              <div class="empty-state" *ngIf="!loadingEmpleados() && empleados().length === 0">
+                <mat-icon>group_off</mat-icon>
+                <h3>Sin empleados cargados</h3>
+                <p>Registre al menos un empleado en Operación para comenzar a programar.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Nueva Pestaña: Consolidado Mensual -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">analytics</mat-icon>
+          <span class="tab-label">Consolidado Mensual</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="tab-header">
+            <div class="header-info">
+              <mat-icon>assessment</mat-icon>
+              <div>
+                <h2>Resumen de Operación</h2>
+                <p>Análisis de horas, dominicales y festivos del mes actual</p>
+              </div>
+            </div>
+
+            <div class="header-actions">
+              <button mat-flat-button class="btn-add-mapo" (click)="loadMesActual()">
+                <mat-icon>refresh</mat-icon>
+                Refrescar Datos
+              </button>
+            </div>
+          </div>
+
+          <mat-divider style="margin-bottom: 24px;"></mat-divider>
+
+          <!-- Filtro de Grupo (Mismo que el calendario) -->
+          <div class="controls-card">
+            <div class="controls-left">
+              <button mat-flat-button class="month-selector-btn" (click)="pickerCons.open()">
+                <mat-icon>calendar_today</mat-icon>
+                <span>{{ anchorDate().setLocale('es').toFormat('MMMM yyyy').toUpperCase() }}</span>
+                <mat-icon class="chevron">expand_more</mat-icon>
+              </button>
+              
+              <mat-form-field class="hidden-picker">
+                <input matInput [matDatepicker]="pickerCons" (dateChange)="onDateChange($event.value)">
+                <mat-datepicker #pickerCons startView="year" (monthSelected)="onMonthSelected($event, pickerCons)"></mat-datepicker>
+              </mat-form-field>
+            </div>
+            
+            <div class="controls-right">
+              <button 
+                mat-flat-button 
+                class="group-pill-btn" 
+                [matMenuTriggerFor]="groupMenuCons"
+              >
+                <div class="pill-content">
+                  <mat-icon class="pill-icon">groups</mat-icon>
+                  <span class="pill-label">{{ getSelectedGrupoName() }}</span>
+                  <mat-icon class="pill-chevron">expand_more</mat-icon>
+                </div>
+              </button>
+
+              <mat-menu #groupMenuCons="matMenu" class="premium-selector-menu">
+                <button mat-menu-item (click)="onGrupoFilterChange('')" [class.active-item]="!selectedGrupoId()">
+                  <mat-icon>all_inclusive</mat-icon>
+                  <span>Todos los Grupos</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button 
+                  mat-menu-item 
+                  *ngFor="let g of grupos()" 
+                  (click)="onGrupoFilterChange(g.id)"
+                  [class.active-item]="selectedGrupoId() === g.id"
+                >
+                  <mat-icon>group_work</mat-icon>
+                  <span>{{ g.nombre }}</span>
+                </button>
+              </mat-menu>
+            </div>
+          </div>
+
+          <!-- Componente de Consolidado -->
+          <app-consolidado-programacion
+            [turnos]="turnos()"
+            [empleados]="filteredEmpleados()"
+          ></app-consolidado-programacion>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</div>

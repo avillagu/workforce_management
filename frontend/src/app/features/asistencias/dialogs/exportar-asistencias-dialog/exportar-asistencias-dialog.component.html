@@ -1,0 +1,71 @@
+<div class="dialog-container">
+  <div class="header-dialog">
+    <div class="title-info">
+      <mat-icon class="title-icon">file_download</mat-icon>
+      <h2>Exportar Historial de Asistencias</h2>
+    </div>
+    <p>Seleccione los filtros para generar el reporte detallado en Excel.</p>
+  </div>
+
+  <mat-divider style="margin-bottom: 24px;"></mat-divider>
+
+  <form [formGroup]="exportForm" class="export-form">
+    <!-- Rango de Fechas -->
+    <div class="form-row dates-row">
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Fecha Desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesde" formControlName="desde">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesde></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="flex-1">
+        <mat-label>Fecha Hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHasta" formControlName="hasta">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHasta></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <!-- Grupo -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Filtrar por Grupo (Opcional)</mat-label>
+      <mat-select formControlName="grupo_id" (selectionChange)="onGrupoChange()">
+        <mat-option value="">Todos los Grupos</mat-option>
+        @for (grupo of grupos(); track grupo.id) {
+          <mat-option [value]="grupo.id">{{ grupo.nombre }}</mat-option>
+        }
+      </mat-select>
+      <mat-icon matPrefix>groups</mat-icon>
+    </mat-form-field>
+
+    <!-- Empleado -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Filtrar por Empleado (Opcional)</mat-label>
+      <mat-select formControlName="usuario_id">
+        <mat-option value="">Todos los Empleados</mat-option>
+        @for (emp of filteredEmpleadosList; track emp.id) {
+          <mat-option [value]="emp.id">{{ emp.nombre_completo }}</mat-option>
+        }
+      </mat-select>
+      <mat-icon matPrefix>person</mat-icon>
+    </mat-form-field>
+  </form>
+
+  <mat-divider style="margin-top: 24px; margin-bottom: 24px;"></mat-divider>
+
+  <div class="dialog-actions">
+    <button mat-button class="btn-cancel" (click)="cancelar()" [disabled]="isExporting()">
+      Cancelar
+    </button>
+    <button 
+      mat-flat-button 
+      class="btn-export-confirm" 
+      [disabled]="exportForm.invalid || isExporting()"
+      (click)="exportar()"
+    >
+      <mat-spinner diameter="20" *ngIf="isExporting()" style="margin-right: 8px;"></mat-spinner>
+      {{ isExporting() ? 'Exportando...' : 'Exportar a Excel' }}
+    </button>
+  </div>
+</div>

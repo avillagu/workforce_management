@@ -1,0 +1,117 @@
+ETAPA 4 — MÓDULO DE ASISTENCIAS
+
+OBJETIVO:
+Desarrollar la sección "Asistencias" del sistema WFM, permitiendo el control de estados de empleados en tiempo real mediante un panel de marcación manual y visualización premium para administradores/supervisores.
+
+ALCANCE:
+- Qué incluye:
+  * Panel de marcación de estados para empleados (4 estados)
+  * Visualización en tiempo real de estados para admin/supervisor
+  * Historial de estados con filtros premium por grupo
+  * Cálculo de tiempos (duración por estado y total del día)
+  * Alertas visuales por exceso de descanso (>30 min)
+  * Exportación a Excel del historial
+  * Tiempo real vía WebSocket
+
+- Qué NO incluye:
+  * Integración con turnos programados (Etapa 3)
+  * Modificación de estados por admin/supervisor
+  * Marcación automática
+  * Geolocalización
+  * Reglas de tiempos máximos bloqueantes
+
+ESTADOS DEL SISTEMA:
+1. Disponible — Inicio de turno / activo
+2. Descanso — Pausa activa (alerta visual >30 min)
+3. En baño — Pausa breve
+4. Fuera de turno — Fin de jornada
+
+REQUERIMIENTOS FUNCIONALES:
+
+1. Panel de Marcación (Empleado):
+   - RF1: Mostrar 4 botones grandes con nombres de estados
+   - RF2: Botón del estado actual debe estar resaltado/deshabilitado
+   - RF3: Al marcar, registrar timestamp UTC inmediatamente
+   - RF4: Mostrar historial del día debajo de botones (tabla)
+   - RF5: Mostrar tiempo total acumulado del día
+   - RF6: Tiempo real: cambios visibles para admin/supervisor <3 seg
+
+2. Vista de Administrador/Supervisor:
+   - RF7: Mostrar todos los empleados con estado actual en tiempo real
+   - RF8: Filtro premium por grupo (igual que Programación)
+   - RF9: Mostrar tiempo en estado actual para cada empleado
+   - RF10: Mostrar tiempo total del día (primer Disponible → último Fuera de turno)
+   - RF11: Tabla con historial completo (empleado, estado, inicio, fin, duración)
+   - RF12: Botón "Exportar Excel" para historial filtrado
+   - RF13: Alerta visual (rojo) si descanso >30 min
+
+3. Historial y Reportes:
+   - RF14: Historial filtrable por fecha (rango)
+   - RF15: Historial filtrable por grupo
+   - RF16: Exportación incluye: empleado, estado, hora_inicio, hora_fin, duración
+
+4. Tiempo Real:
+   - RF17: WebSocket emite evento cuando empleado marca estado
+   - RF18: Admin/supervisor ven cambio sin recargar página
+
+REQUERIMIENTOS NO FUNCIONALES:
+
+- RNF1: Diseño premium coherente con Etapas 2-3 (paleta de colores existente)
+- RNF2: Tiempo de carga <2 segundos
+- RNF3: Actualizaciones en tiempo real <3 segundos
+- RNF4: Soporte hasta 50 empleados simultáneos en vista
+- RNF5: Validaciones estrictas (no estados duplicados consecutivos)
+- RNF6: Feedback visual inmediato (toasts, animaciones)
+- RNF7: Responsive (panel empleado usable en móvil)
+
+STACK TECNOLÓGICO:
+
+- Frontend: Angular 17 (continuidad)
+  * Angular Material (botones, tablas, dialogs)
+  * Signals para estado reactivo
+  * Socket.IO-client para tiempo real
+  * SheetJS/xlsx para exportación Excel
+
+- Backend: Node.js/Express (continuidad)
+  * API REST para CRUD de asistencias
+  * WebSocket para eventos en tiempo real
+  * Swagger para documentación
+  * Luxon para manejo de fechas UTC
+
+BASE DE DATOS:
+
+- Tabla: wfm_auth.asistencias (definida en architecture_erd.md)
+  * id (uuid, PK)
+  * usuario_id (uuid, FK → usuarios)
+  * estado (enum: disponible, descanso, en_bano, fuera_de_turno)
+  * hora_inicio (timestamptz, UTC)
+  * hora_fin (timestamptz, UTC, nullable)
+  * created_at (timestamptz, UTC)
+
+CRITERIOS DE ÉXITO:
+
+1. Empleado puede marcar los 4 estados sin errores
+2. Historial del día se muestra correctamente con duraciones
+3. Tiempo total del día se calcula correctamente (primer Disponible → último Fuera de turno)
+4. Admin/supervisor ven estados en tiempo real (<3 seg)
+5. Filtro por grupo funciona correctamente
+6. Exportación Excel genera archivo válido con columnas correctas
+7. Alerta visual de descanso >30 min se muestra en rojo
+8. Diseño es premium y coherente con el resto del sistema
+
+RIESGOS IDENTIFICADOS:
+
+1. Concurrencia: empleado marca estados muy rápido → validar estado anterior
+2. Cálculo de tiempos: bordes del día (cambio de fecha) → usar UTC estricto
+3. Performance: 50 empleados × actualizaciones frecuentes → optimizar WebSocket
+4. Estados huérfanos: empleado marca "Disponible" sin cerrar estado anterior → cerrar automáticamente
+
+MITIGACIÓN:
+
+1. Validar que estado nuevo ≠ estado actual
+2. Luxon para manejo consistente de fechas, siempre UTC
+3. Debouncing de eventos WebSocket si es necesario
+4. Regla de negocio: al marcar nuevo estado, cerrar el anterior automáticamente
+
+---
+FIN DEL DOCUMENTO

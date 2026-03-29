@@ -1,0 +1,100 @@
+<div class="login-container">
+  <!-- Background decoration (Simplificado) -->
+  <div class="login-background"></div>
+
+  <!-- Login Card -->
+  <div class="login-card-wrapper">
+    <mat-card class="login-card">
+      <div class="login-card-header">
+        <div class="logo-container">
+          <mat-icon class="logo-icon">business_center</mat-icon>
+        </div>
+        <div class="header-text">
+          <h1 class="app-title">WFM</h1>
+          <p class="app-subtitle">Workforce Management</p>
+        </div>
+      </div>
+      
+      <div class="login-card-body">
+        <div class="welcome-section">
+          <h2>¡Bienvenido de nuevo!</h2>
+          <p>Ingrese sus credenciales para acceder</p>
+        </div>
+
+      <form (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Username Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-icon matPrefix>person_outline</mat-icon>
+          <mat-label>Usuario</mat-label>
+          <input 
+            matInput 
+            type="text" 
+            [(ngModel)]="username" 
+            name="username"
+            placeholder="Ingrese su usuario"
+            autocomplete="username"
+            (input)="onInput()"
+            [disabled]="isLoading()"
+          />
+        </mat-form-field>
+
+        <!-- Password Field -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-icon matPrefix>lock_outline</mat-icon>
+          <mat-label>Contraseña</mat-label>
+          <input 
+            matInput 
+            [type]="showPassword() ? 'text' : 'password'" 
+            [(ngModel)]="password" 
+            name="password"
+            placeholder="Ingrese su contraseña"
+            autocomplete="current-password"
+            (input)="onInput()"
+            [disabled]="isLoading()"
+          />
+          <button 
+            mat-icon-button 
+            matSuffix 
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="'Mostrar contraseña'"
+            [disabled]="isLoading()"
+          >
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <!-- Error Message -->
+        @if (errorMessage()) {
+          <div class="error-message">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- Login Button -->
+        <button 
+          mat-raised-button 
+          color="primary" 
+          type="submit"
+          class="login-button"
+          [disabled]="isLoading()"
+        >
+          @if (isLoading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+            <span>Validando...</span>
+          } @else {
+            <mat-icon>login</mat-icon>
+            <span>Iniciar Sesión</span>
+          }
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <p class="copyright">© 2026 WFM System</p>
+        <p class="version">Versión 1.0.0</p>
+      </div>
+    </div> <!-- login-card-body -->
+    </mat-card>
+  </div>
+</div>

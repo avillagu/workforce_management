@@ -1,0 +1,21 @@
+REQUERIMIENTOS TÉCNICOS GLOBALES:
+- Frontend: Angular
+- Backend: Node.js
+- Base de Datos: PostgreSQL (Administrado vía pgAdmin local)
+- Arquitectura: Solución de alta complejidad, diseñada para ser altamente profesional.
+
+REQUERIMIENTOS - ETAPA 1 (FASE INICIAL):
+1. Preparación de Entorno: Configurar esquema inicial en la base de datos PostgreSQL.
+   - Todas las fechas y horas DEBEN almacenarse en formato TIMESTAMPTZ.
+   - Seguir estrictamente el Diagrama Entidad-Relación (ERD) provisto.
+2. Autenticación: Desarrollar el sistema completo de Login para acceso a la plataforma.
+   - El Backend debe exponer documentación de las APIs vía Swagger (ej. /api-docs).
+   - El Frontend debe usar AuthGuards estrictos para bloquear cualquier acceso a rutas protegidas mediante la URL si el token no es válido.
+3. Interfaz Principal (Post-Login):
+   - Diseño e implementación de un Menú Desplegable en la barra lateral izquierda (Sidebar).
+   - Secciones estáticas del menú:
+     * Dashboard (Principal)
+     * Programación
+     * Operación
+     * Novedades
+     * Asistencias

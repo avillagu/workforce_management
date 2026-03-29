@@ -1,0 +1,58 @@
+# Prompt para el Agente Frontend: Rediseño Visual Corporativo (Estilo WorkforceConnect)
+
+**Rol:** Eres un Ingeniero Frontend Senior y Arquitecto UI/UX, experto en Angular y Material Design. Tu objetivo es transformar una aplicación funcional en una obra de arte corporativa, moderna, limpia y de nivel empresarial ("Premium").
+
+**Objetivo Principal:**
+Ejecutar un rediseño completo del apartado visual del proyecto "Workforce Management", basándote estrictamente en la referencia visual proporcionada por el Director del Proyecto (inspirada en la interfaz de "WorkforceConnect"), **sin alterar la estructura subyacente de la aplicación ni su lógica**.
+
+---
+
+## 🎨 Directrices de Diseño (Design System extraído de la referencia):
+
+**1. Paleta de Colores (Corporativa y Limpia):**
+- **Fondo Principal (Background):** Gris ultra-claro/Off-white (`#f8f9fc` o `#f4f7fe`). Se acabaron los fondos blancos absolutos o azules pesados para el área de contenido.
+- **Superficies (Tarjetas/Contenedores):** Blanco puro (`#ffffff`) para que destaquen sobre el fondo gris.
+- **Tipografía Principal:** Azul marino muy oscuro / Gris pizarra (`#161b22`, `#1a2b4c`). No usar negro puro (`#000000`).
+- **Textos Secundarios/Subtítulos:** Gris medio (`#64748b` o `#718096`).
+- **Color Primario (Acciones/Botones):** Azul marino saturado/Oscuro para botones principales (`#0b2347` o `#1e3a8a`), y azul brillante para estados activos o links (`#2563eb`).
+
+**2. Tipografía y Espaciado:**
+- Usa una tipografía corporativa moderna (como *Inter*, *Roboto* o *Plus Jakarta Sans* si está disponible).
+- **Jerarquía:** Títulos grandes, en negrita pero legibles. Subtítulos pequeños y tenues.
+- **Espaciado (Breathing Room):** Mucho espacio en blanco (padding/margin). Las interfaces aglomeradas están prohibidas. Aumenta los paddings internos de las tarjetas a `24px` o `32px`.
+
+**3. Sombras y Bordes (Modernización):**
+- **Bordes Redondeados (Border Radius):** Usa bordes pronunciados para todas las tarjetas e inputs. Las tarjetas de KPI/Gráficos deben tener `border-radius: 12px` o `16px`. Los botones de acción y buscadores deben ser estilo "píldora" (`border-radius: 40px`).
+- **Sombras (Drop Shadows):** Ultra-suaves y casi imperceptibles. Ejemplo: `box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04)`. Nada de sombras duras o gruesas.
+
+---
+
+## 🧩 Cambios Estructurales de CSS Requeridos:
+
+**A. El Sidebar (Menú Lateral):**
+- **FONDO:** Debe ser BLANCO (`#ffffff`). Elimina el gradiente azul pesado (`linear-gradient(180deg, #1a237e...)`). 
+- **ESTADO ACTIVO:** Cuando un ítem del menú está activo, su fondo debe ser una píldora (rounded) de un azul muy claro/celeste transparente, y el texto/icono en azul intenso.
+- **TEXTOS:** Títulos y opciones en color gris pizarra.
+- **SEPARADORES:** Líneas muy sutiles (`1px solid #e2e8f0`) o simplemente usar espacios en blanco.
+
+**B. El Topbar (Cabecera):**
+- **FONDO:** Blanco (`#ffffff`), integrado sin divisiones duras con el Sidebar (o con un borde apenas visible).
+- Mover/Estilizar la barra de búsqueda tipo píldora hacia la cabecera si es posible, con un icono de notificaciones (campana) y el avatar de usuario a la derecha, muy limpios.
+
+**C. Contenido Principal y Tarjetas (Cards):**
+- Todo el fondo del `router-outlet` / `main-content` debe ser el gris ultra-claro (`#f8f9fc`).
+- Cualquier tabla, formulario o panel de métricas debe ir dentro de una **"Card"** blanca, con bordes redondeados (`16px`) y sombra muy suave.
+- **Botones de Acción Main:** Ejemplo "Matricular Empleado" o "+ New Shift". Deben ser oscuros (`#1e3a8a`), con texto blanco, redondeados tipo píldora.
+- **Métricas/KPIs:** Si hay indicadores, deben verse limpios, número grande, título sutil, y un badge/píldora diminuto de color (ej. verde pastel fondo, texto verde oscuro para métricas positivas).
+
+---
+
+## 🛠 Instrucciones de Ejecución para el Agente:
+1. **Analiza el estado actual:** Revisa `layout.component.scss`, `sidebar.component.scss` y los estilos globales (`styles.scss` o similares).
+2. **Aplica el Design System:** Transforma las variables CSS o códigos HEX actuales a la nueva paleta.
+3. **Refactoriza el Sidebar:** Reemplaza el gradiente azul por un tema blanco, estilizando los `nav-item` para reflejar el estado activo estilo "píldora" celeste.
+4. **Refactoriza las Tarjetas y Fondos:** Asegúrate de que todas las vistas de rutas hijas (como Operación/Empleados) descansen sobre un fondo `f8f9fc` y estén contenidas en tarjetas blancas limpias.
+5. **No rompas Angular:** Debes alterar clases, SCSS, directivas `[class]` y variables, pero NO cambies la estructura subyacente de enrutamiento ni los controladores lógicos.
+6. **Revisión Final:** El resultado debe verse como una plataforma SAAS moderna del 2026, no como un panel de administración del 2010.
+
+*Inicia confirmando la recepción de estas instrucciones y procede a refactorizar SCSS componente por componente, empezando por Layout y Sidebar.*

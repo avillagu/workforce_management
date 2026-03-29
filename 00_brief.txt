@@ -1,0 +1,5 @@
+PROYECTO: Workforce Management Web App
+EMPRESA: Pequeña empresa (hasta 50 empleados)
+OBJETIVO: Sistema estructurado para planificación, programación de turnos y monitoreo de asistencias.
+METODOLOGÍA: Desarrollo iterativo por etapas, validado y aprobado por el Agente Senior antes de continuar.
+PRESUPUESTO: $0 (Uso estricto de tecnologías Open Source y arquitecturas gratuitas/locales para el desarrollo inicial).

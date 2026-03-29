@@ -1,0 +1,98 @@
+ETAPA 3 — PROGRAMACIÓN DE TURNOS
+
+OBJETIVO:
+Desarrollar la sección "Programación" del sistema WFM, permitiendo la gestión visual de turnos mediante un calendario interactivo.
+
+ALCANCE:
+- Qué incluye:
+  * Calendario con vista semanal y mensual
+  * Lista de empleados en primera columna
+  * Programación individual de turnos (Admin)
+  * Programación masiva de turnos (Admin)
+  * Visualización en tiempo real de cambios
+  * Restricción por roles (Admin vs otros)
+  
+- Qué NO incluye:
+  * Gestión de novedades o asistencias
+  * Exportación a Excel/PDF
+  * Notificaciones push
+  * Historial de cambios
+
+REQUERIMIENTOS FUNCIONALES:
+
+1. Calendario Visual:
+   - RF1: Mostrar empleados en primera columna
+   - RF2: Mostrar días del calendario en columnas siguientes
+   - RF3: Cada celda muestra el turno programado (hora inicio - hora fin)
+   - RF4: Toggle entre vista semanal y vista mensual
+
+2. Programación de Turnos:
+   - RF5: Admin puede programar turno individual (empleado + fecha + horas)
+   - RF6: Admin puede programar turnos masivos (múltiples empleados + rango de fechas)
+   - RF7: Validar que no existan turnos superpuestos
+   - RF8: Confirmación antes de guardar cambios
+
+3. Visualización en Tiempo Real:
+   - RF9: Cambios reflejados inmediatamente sin recargar página
+   - RF10: Polling o WebSocket para actualizaciones
+
+4. Control de Roles:
+   - RF11: Solo admin ve botones de "Programar Individual" y "Programar Masivo"
+   - RF12: Otros roles solo pueden visualizar el calendario
+
+REQUERIMIENTOS NO FUNCIONALES:
+
+- RNF1: Diseño premium y profesional (coherente con Etapa 2)
+- RNF2: Tiempo de carga < 2 segundos para calendario mensual
+- RNF3: Soporte hasta 50 empleados simultáneos en vista
+- RNF4: Actualizaciones en tiempo real < 3 segundos
+- RNF5: Validaciones de formulario estrictas
+- RNF6: Manejo de errores con feedback visual (toasts)
+
+STACK TECNOLÓGICO:
+
+- Frontend: Angular 17 (continuidad con Etapas 1-2)
+  * Angular Material (MatCalendar o librería de calendario)
+  * Signals para estado reactivo
+  * WebSocket o polling para tiempo real
+  
+- Backend: Node.js/Express (continuidad)
+  * API REST para CRUD de turnos
+  * WebSocket opcional para tiempo real
+  * Swagger para documentación
+
+BASE DE DATOS:
+
+- Tabla: wfm_auth.turnos (ya definida en ERD)
+  * id (uuid, PK)
+  * usuario_id (uuid, FK → usuarios)
+  * hora_inicio_programada (timestamptz)
+  * hora_fin_programada (timestamptz)
+  * created_at (timestamptz)
+
+CRITERIOS DE ÉXITO:
+
+1. Calendario renderiza correctamente en vistas semanal y mensual
+2. Admin puede crear, editar y eliminar turnos individuales
+3. Admin puede crear turnos masivos para múltiples empleados
+4. Empleados y supervisores solo visualizan
+5. Cambios se reflejan en tiempo real (< 3 seg)
+6. Validación de turnos superpuestos funciona
+7. Diseño coherente con estándar premium del proyecto
+
+RIESGOS IDENTIFICADOS:
+
+1. Complejidad de librería de calendario en Angular
+2. Performance con 50 empleados × 30 días = 1500 celdas
+3. Manejo de zona horaria en turnos
+4. Conflictos de concurrencia si dos admins editan simultáneamente
+
+MITIGACIÓN:
+
+1. Usar librería probada (FullCalendar, Angular Calendar)
+2. Virtual scrolling o paginación si es necesario
+3. Luxon para manejo consistente de fechas UTC
+4. Optimistic UI + validación de conflictos
+
+---
+FIN DEL DOCUMENTO

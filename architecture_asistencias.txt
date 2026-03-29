@@ -1,0 +1,152 @@
+DISEÑO DE ARQUITECTURA — ETAPA 4: ASISTENCIAS
+
+DESCRIPCIÓN GENERAL:
+Sistema de control de estados de empleados en tiempo real mediante marcación manual. 
+Los empleados registran cambios de estado (Disponible, Descanso, En baño, Fuera de turno) 
+y administradores/supervisores monitorean en tiempo real con capacidad de filtrado y exportación.
+
+COMPONENTES DEL SISTEMA:
+
+1. BASE DE DATOS (PostgreSQL)
+   - Tabla: wfm_auth.asistencias
+   - Columnas:
+     * id (uuid, PK)
+     * usuario_id (uuid, FK → usuarios.id)
+     * estado (varchar, enum: disponible, descanso, en_bano, fuera_de_turno)
+     * hora_inicio (timestamptz, UTC)
+     * hora_fin (timestamptz, UTC, nullable)
+     * created_at (timestamptz, UTC)
+   - Índices:
+     * idx_asistencias_usuario (usuario_id)
+     * idx_asistencias_fecha (hora_inicio DESC)
+     * idx_asistencias_estado (estado) WHERE hora_fin IS NULL
+
+2. BACKEND (Node.js/Express)
+   - Rutas API:
+     * POST   /api/asistencias/marcar        → Marcar nuevo estado
+     * GET    /api/asistencias/historial     → Historial con filtros
+     * GET    /api/asistencias/estado-actual → Estado actual de todos
+     * GET    /api/asistencias/mis-estados   → Historial del día (empleado)
+     * GET    /api/asistencias/tiempo-total  → Tiempo total del día
+   
+   - Servicios:
+     * AsistenciasService.marcarEstado()
+     * AsistenciasService.cerrarEstadoAnterior()
+     * AsistenciasService.calcularTiempoTotal()
+     * AsistenciasService.obtenerHistorial()
+     * AsistenciasService.obtenerEstadosActuales()
+   
+   - WebSocket:
+     * Evento: 'asistencias:estado_actualizado'
+     * Payload: { usuario_id, estado, hora_inicio, usuario_nombre }
+     * Integrado con turnosSocket existente
+
+3. FRONTEND (Angular 17)
+   - Componentes:
+     * AsistenciasComponent (panel empleado - marcación)
+     * MonitoreoAsistenciasComponent (vista admin/supervisor)
+     * ExportarAsistenciasDialog (exportación Excel)
+   
+   - Servicios:
+     * AsistenciasService (HTTP calls)
+     * AsistenciasSocketService (WebSocket)
+   
+   - Modelos:
+     * Estado (interface)
+     * RegistroAsistencia (interface)
+     * TiempoTotal (interface)
+
+FLUJO DE DATOS:
+
+1. MARCACIÓN DE ESTADO (Empleado):
+   Usuario → Click botón → AsistenciasComponent → AsistenciasService.marcar()
+   → POST /api/asistencias/marcar → Backend valida → Cierra estado anterior
+   → Abre nuevo estado → Emite WebSocket → Frontend actualiza UI → Toast confirmación
+
+2. MONITOREO (Admin/Supervisor):
+   Admin abre MonitoreoAsistenciasComponent → GET /api/asistencias/estado-actual
+   → Muestra tabla con todos los empleados + estado + tiempo en estado
+   → WebSocket escucha 'asistencias:estado_actualizado' → Actualiza fila en tiempo real
+
+3. CÁLCULO DE TIEMPOS:
+   GET /api/asistencias/tiempo-total?usuario_id=XXX&fecha=YYYY-MM-DD
+   → Backend busca primer 'disponible' y último 'fuera_de_turno' del día
+   → Calcula diferencia con luxon
+   → Retorna { horas_trabajadas, minutos, segundos }
+
+4. EXPORTACIÓN:
+   Click "Exportar Excel" → Abre dialog con filtros (fecha inicio, fecha fin, grupo)
+   → GET /api/asistencias/historial?desde=...&hasta=...&grupo_id=...
+   → Backend retorna array de registros
+   → Frontend genera Excel con SheetJS → Descarga automática
+
+TECNOLOGÍAS:
+
+- Lenguajes: TypeScript (Angular), JavaScript/Node.js
+- Frameworks: Angular 17, Express
+- Librerías Backend: luxon (fechas), socket.io (tiempo real)
+- Librerías Frontend: socket.io-client, xlsx (SheetJS)
+- Infraestructura: Local (desarrollo)
+
+INTEGRACIONES:
+
+- WebSocket: Mismo servidor Socket.IO de Etapa 3 (turnosSocket)
+- Auth: Mismo middleware JWT existente
+- Grupos: Mismo endpoint de grupos de Etapa 2
+- Usuarios: Mismo endpoint de usuarios de Etapa 2
+
+ESCALABILIDAD:
+
+- 50 empleados × ~10 marcaciones/día = 500 registros/día
+- Índice en (usuario_id, hora_inicio) para consultas rápidas
+- WebSocket emite solo a clientes conectados (salas por rol)
+
+SEGURIDAD:
+
+- Todos los endpoints protegidos con JWT
+- Empleado solo puede marcar sus propios estados
+- Admin/Supervisor pueden ver todos los estados
+- Validación: no permitir estado duplicado consecutivo
+- Validación: no permitir marcar si ya hay estado abierto
+
+DECISIONES CLAVE:
+
+1. ESTADO ÚNICO ABIERTO: Cada usuario tiene máximo 1 registro con hora_fin NULL.
+   Al marcar nuevo estado, se cierra el anterior automáticamente.
+
+2. CÁLCULO DE TIEMPO TOTAL: Se calcula dinámicamente (no se almacena).
+   Fórmula: último 'fuera_de_turno' - primer 'disponible' del día.
+   Si no hay 'fuera_de_turno', se usa hora actual.
+
+3. ALERTA DE DESCANSO: Frontend calcula duración en tiempo real.
+   Si estado === 'descanso' Y duración > 30 min → mostrar en rojo.
+
+4. WEBSOCKET COMPARTIDO: Se reutiliza la conexión Socket.IO de Etapa 3.
+   Evento diferenciado: 'asistencias:estado_actualizado' vs 'turnos:actualizado'.
+
+5. EXPORTACIÓN CLIENTE-SIDE: Excel se genera en el navegador (SheetJS).
+   Evita carga en servidor y permite filtros interactivos.
+
+RIESGOS TÉCNICOS:
+
+1. Estados huérfanos: Usuario marca pero no cierra sesión → hora_fin NULL.
+   Mitigación: Job nocturno (futuro) o corrección manual por admin.
+
+2. Cambio de día: Usuario inicia turno 23:50 y termina 00:10.
+   Mitigación: Todas las fechas en UTC, cálculo por fecha local del usuario.
+
+3. Concurrencia: Doble click rápido → dos marcaciones simultáneas.
+   Mitigación: Deshabilitar botones tras click + debounce 500ms.
+
+4. Timezone: Usuario en zona horaria diferente.
+   Mitigación: Backend siempre UTC, frontend convierte a local con luxon.
+
+DEPENDENCIAS ENTRE COMPONENTES:
+
+- AsistenciasService depende de AuthService (usuario actual)
+- AsistenciasSocketService depende de configuración Socket.IO existente
+- MonitoreoAsistenciasComponent depende de endpoint de grupos
+- Exportar dialog depende de datos de historial
+
+---
+FIN DEL DOCUMENTO

@@ -1,0 +1,228 @@
+<div class="asistencias-container">
+  <header class="header-asistencias">
+    <div class="header-info">
+      <mat-icon class="header-icon">{{ isAdmin() || isSupervisor() ? 'monitor_heart' : 'badge' }}</mat-icon>
+      <div>
+        <h1>{{ isAdmin() || isSupervisor() ? 'Monitoreo de Asistencias' : 'Gestión de Asistencias' }}</h1>
+        <p>{{ isAdmin() || isSupervisor() ? 'Vista en tiempo real del estado de todo el personal operativo' : 'Marque su estado actual de operación en tiempo real' }}</p>
+      </div>
+    </div>
+    <div class="header-actions" *ngIf="isAdmin() || isSupervisor()">
+      <button mat-flat-button class="btn-export" (click)="abrirExportar()">
+        <mat-icon>file_download</mat-icon>
+        Exportar Reporte
+      </button>
+    </div>
+  </header>
+
+  <mat-divider style="margin-bottom: 24px;"></mat-divider>
+
+  <!-- Panel de Estados (Solo Empleados) -->
+  <mat-card class="panel-estados" *ngIf="isEmpleado()">
+    <mat-card-content>
+      <div class="botones-grid">
+        @for (estado of ESTADOS; track estado.tipo) {
+          <button
+            mat-flat-button
+            class="estado-btn"
+            [class]="'btn-' + estado.color"
+            [class.active]="estadoActual() === estado.tipo"
+            [disabled]="isLoading() || estadoActual() === estado.tipo"
+            (click)="marcarEstado(estado.tipo)"
+          >
+            <div class="btn-content">
+              <mat-icon>{{ estado.icon }}</mat-icon>
+              <div class="label-group">
+                <span class="btn-label">{{ estado.label }}</span>
+                <span class="btn-status" *ngIf="estadoActual() === estado.tipo">ACTIVO</span>
+              </div>
+            </div>
+          </button>
+        }
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Filtros de Monitoreo (Admin/Supervisor) -->
+  <div class="filters-card" *ngIf="isAdmin() || isSupervisor()">
+    <button 
+      mat-flat-button 
+      class="group-pill-btn" 
+      [matMenuTriggerFor]="groupMenu"
+    >
+      <div class="pill-content">
+        <mat-icon class="pill-icon">groups</mat-icon>
+        <span class="pill-label">{{ getSelectedGrupoName() }}</span>
+        <mat-icon class="pill-chevron">expand_more</mat-icon>
+      </div>
+    </button>
+
+    <mat-menu #groupMenu="matMenu" class="premium-selector-menu">
+      <button mat-menu-item (click)="onGrupoChange('')" [class.active-item]="!selectedGrupoId()">
+        <mat-icon>all_inclusive</mat-icon>
+        <span>Todos los Grupos</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button 
+        mat-menu-item 
+        *ngFor="let g of grupos()" 
+        (click)="onGrupoChange(g.id)"
+        [class.active-item]="selectedGrupoId() === g.id"
+      >
+        <mat-icon>group_work</mat-icon>
+        <span>{{ g.nombre }}</span>
+      </button>
+    </mat-menu>
+
+    <div class="legend">
+      <div class="legend-item"><span class="dot d-success"></span> Disponible</div>
+      <div class="legend-item"><span class="dot d-warning"></span> Descanso</div>
+      <div class="legend-item"><span class="dot d-info"></span> En baño</div>
+      <div class="legend-item"><span class="dot d-default"></span> Fuera de turno</div>
+      <div class="legend-item"><span class="dot d-danger"></span> Alerta (>30m)</div>
+    </div>
+  </div>
+
+  <!-- Tabla de Monitoreo (Admin/Supervisor) -->
+  <mat-card class="monitoreo-card" *ngIf="isAdmin() || isSupervisor()">
+    <mat-card-content class="table-container">
+      <table mat-table [dataSource]="filteredMonitoreo()" class="monitoreo-table">
+        <ng-container matColumnDef="empleado">
+          <th mat-header-cell *matHeaderCellDef>Empleado</th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-button class="emp-row-btn" (click)="verDetalleEmpleado(row)" matTooltip="Ver historial detallado">
+              <div class="emp-row-info">
+                <div class="avatar-mini">{{ (row.usuario_nombre || '??').slice(0, 2).toUpperCase() }}</div>
+                <span class="emp-name">{{ row.usuario_nombre }}</span>
+              </div>
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="grupo">
+          <th mat-header-cell *matHeaderCellDef>Grupo</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="grupo-label">{{ row.grupo_nombre }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="badge-v2" [class]="'badge-v2-' + getColorEstado(row.estado)">
+              {{ getLabel(row.estado) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="hora_inicio">
+          <th mat-header-cell *matHeaderCellDef>Hora Inicio</th>
+          <td mat-cell *matCellDef="let row" class="time-cell">
+            {{ formatHora(row.hora_inicio) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tiempo_en_estado">
+          <th mat-header-cell *matHeaderCellDef>Tiempo en Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="duration-badge-monitor" [class.alert]="row.alerta" [matTooltip]="row.alerta ? 'Descanso excedido (>30 min)' : ''">
+              {{ formatDuracion(row.tiempo_en_estado) }}
+              <mat-icon *ngIf="row.alerta" class="alert-icon">warning</mat-icon>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="turno_hoy">
+          <th mat-header-cell *matHeaderCellDef>Turno Hoy</th>
+          <td mat-cell *matCellDef="let row" class="shift-cell">
+            <span class="shift-value">{{ row.turno_hoy || 'No prog.' }}</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumnsMonitor"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumnsMonitor" [class.flash-update]="updatingIds().has(row.usuario_id)"></tr>
+      </table>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Sincronizando estados...</p>
+        </div>
+      }
+      @if (filteredMonitoreo().length === 0 && !isLoading()) {
+        <div class="empty-state">
+          <mat-icon>people_outline</mat-icon>
+          <p>No hay personal registrado en este grupo actualmente.</p>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Historial del Día Individual (Solo Empleados) -->
+  <mat-card class="panel-historial" *ngIf="isEmpleado()">
+    <mat-card-header>
+      <div class="historial-header">
+        <div class="title-with-icon">
+          <mat-icon>history</mat-icon>
+          <mat-card-title>Historial del Día</mat-card-title>
+        </div>
+        <div class="header-badges">
+          <div class="turno-badge">
+            <mat-icon>schedule</mat-icon>
+            <div class="badge-text">
+              <span class="badge-label">Turno Programado:</span>
+              <span class="badge-value">{{ turnoHoyEmpleado() }}</span>
+            </div>
+          </div>
+          <div class="tiempo-total-badge">
+            <mat-icon>timer</mat-icon>
+            <div class="badge-text">
+              <span class="total-label">Tiempo Total en Turno:</span>
+              <span class="total-value">{{ tiempoTotal() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content class="table-container">
+      <table mat-table [dataSource]="historial()">
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="status-badge" [class]="'badge-' + getColorEstado(row.estado)">
+              {{ getLabel(row.estado) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="hora_inicio">
+          <th mat-header-cell *matHeaderCellDef>Hora Inicio</th>
+          <td mat-cell *matCellDef="let row">{{ formatHora(row.hora_inicio) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="hora_fin">
+          <th mat-header-cell *matHeaderCellDef>Hora Fin</th>
+          <td mat-cell *matCellDef="let row">{{ formatHora(row.hora_fin) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="duracion">
+          <th mat-header-cell *matHeaderCellDef>Duración</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="duration-text">{{ formatDuracion(row.duracion) }}</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumnsHistorial"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumnsHistorial" [class.active-row]="!row.hora_fin"></tr>
+      </table>
+
+      @if (historial().length === 0) {
+        <div class="empty-historial">
+          <mat-icon>event_busy</mat-icon>
+          <p>No hay marcaciones registradas para el día de hoy.</p>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

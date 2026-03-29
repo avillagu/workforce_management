@@ -1,0 +1,81 @@
+CONTRATO DE PROYECTO
+
+NOMBRE DEL PROYECTO: Workforce Management Web App
+
+OBJETIVO GENERAL: Construir, de manera iterativa por etapas, una plataforma robusta y profesional para gestionar la planificación, turnos y asistencias de una plantilla laboral de hasta 50 empleados.
+
+PROBLEMA A RESOLVER: Ausencia de un sistema unificado, gratuito y altamente profesional para el control de workforce management en una pequeña empresa.
+
+ALCANCE:
+- Qué incluye:
+  * Etapa 1: Base de Datos inicial, Sistema de Login y UI Base con Menú Lateral ✅ COMPLETADA
+  * Etapa 2: Gestión de Grupos y Empleados (Módulo Operación) ✅ COMPLETADA
+  * Etapa 3: Programación de Turnos con calendario interactivo ✅ APROBADA
+  * Etapa 4: Módulo de Asistencias con control de estados en tiempo real 🔄 EN APROBACIÓN
+- Qué NO incluye: Herramientas de infraestructura de pago, despliegues comerciales inmediatos con costo, o módulos fuera del alcance aprobado.
+
+REQUERIMIENTOS FUNCIONALES (ETAPA 1):
+1. Configuración de base de datos PostgreSQL local.
+2. Sistema funcional de Autenticación (Login).
+3. Sidebar desplegable tras el login con enlaces a: Dashboard, Programación, Operación, Novedades, Asistencias.
+
+REQUERIMIENTOS FUNCIONALES (ETAPA 2):
+1. CRUD de Grupos (Crear, Leer, Actualizar, Eliminar).
+2. Gestión de Empleados con formulario reactivo.
+3. Relación empleados → grupos.
+4. API documentada en Swagger.
+
+REQUERIMIENTOS FUNCIONALES (ETAPA 3):
+1. Calendario visual con vistas semanal y mensual.
+2. Lista de empleados en primera columna del calendario.
+3. Programación individual de turnos (solo admin).
+4. Programación masiva de turnos (solo admin).
+5. Actualización en tiempo real para todos los usuarios.
+6. Validación de superposición de turnos.
+
+REQUERIMIENTOS NO FUNCIONALES:
+- Performance: Altamente interactivo y veloz.
+- Seguridad: Cifrado en base de datos de contraseñas y validación correcta del usuario.
+- Diseño: Interfaz orientada a lo profesional (alta calidad visual y de experiencia de usuario).
+- Tiempo real: Actualizaciones < 3 segundos.
+
+STACK TECNOLÓGICO PROPUESTO:
+- Backend: Node.js + Express + Socket.IO
+- Frontend: Angular 17 + Angular Material + FullCalendar
+- Base de Datos: PostgreSQL (+ pgAdmin)
+
+ARQUITECTURA GENERAL:
+Sistema cliente-servidor con WebSocket para tiempo real. Ver architecture.txt y architecture_erd.md.
+
+AGENTES DEFINIDOS:
+- Etapa 1: Fullstack Developer ✅ COMPLETADA
+- Etapa 2: Backend Developer + Frontend Developer ✅ COMPLETADA
+- Etapa 3: Backend Developer + Frontend Developer 🔄 EN EJECUCIÓN
+
+CRITERIOS DE ÉXITO:
+- Etapa 1: Usuario se autentica y visualiza menú lateral ✅
+- Etapa 2: CRUD de grupos y empleados funcional ✅
+- Etapa 3: Calendario renderiza, admin programa turnos, tiempo real funciona 🔄
+
+RIESGOS IDENTIFICADOS:
+- Mantener la restricción de costo cero puede requerir trabajo adicional en configuración de despliegues locales y futuros alojamientos limitados.
+- Complejidad de librería de calendario en Angular.
+- Performance con 50 empleados × 30 días en vista mensual.
+
+APROBACIONES REGISTRADAS:
+
+APROBADO POR: Alejandro Villa
+FECHA: 21 de marzo 2026
+ETAPA: 1 — Autenticación y Menú Principal
+
+APROBADO POR: Alejandro Villa
+FECHA: 22 de marzo 2026
+ETAPA: 2 — Gestión de Grupos y Empleados
+
+APROBADO POR: Alejandro Villa
+FECHA: 23 de marzo 2026
+ETAPA: 3 — Programación de Turnos
+
+APROBADO POR: Alejandro Villa
+FECHA: 24 de marzo 2026
+ETAPA: 4 — Módulo de Asistencias

@@ -1,0 +1,277 @@
+<div class="smart-wizard-container">
+  <div class="header-dialog">
+    <div class="header-main">
+      <div class="title-info">
+        <mat-icon class="title-icon">auto_awesome</mat-icon>
+        <h2>Programación Inteligente</h2>
+      </div>
+      <button mat-icon-button class="close-btn" (click)="cerrar()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <p>Configure las reglas y el sistema generará los turnos automáticamente buscando equidad y cobertura.</p>
+  </div>
+
+  <mat-stepper orientation="horizontal" #stepper linear class="custom-stepper">
+    <!-- Paso 1: Identificación y Personal -->
+    <mat-step [stepControl]="step1Form">
+      <form [formGroup]="step1Form" class="step-content">
+        <ng-template matStepLabel>Personal</ng-template>
+        
+        <div class="form-header-step">
+          <h3>Nombre de la Configuración</h3>
+          <button mat-stroked-button color="accent" type="button" [matMenuTriggerFor]="tplMenu" *ngIf="plantillas().length > 0">
+            <mat-icon>history</mat-icon> Mis Plantillas
+          </button>
+          <mat-menu #tplMenu="matMenu" class="premium-selector-menu">
+            @for (tpl of plantillas(); track tpl.id) {
+              <div class="menu-item-wrapper">
+                <button mat-menu-item (click)="cargarConfiguracion(tpl)">
+                  <mat-icon>description</mat-icon>
+                  <span>{{ tpl.nombre }} ({{ tpl.grupo_nombre }})</span>
+                </button>
+                <button mat-icon-button color="warn" class="delete-tpl-btn" (click)="$event.stopPropagation(); eliminarPlantilla(tpl.id)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            }
+          </mat-menu>
+        </div>
+
+        <div class="form-section">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Ej: Rotación Estándar Grupo A</mat-label>
+            <input matInput formControlName="nombre_config">
+          </mat-form-field>
+        </div>
+
+        <div class="form-section">
+          <h3>Selección de Grupo y Empleados</h3>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Grupo de Trabajo</mat-label>
+            <mat-select formControlName="grupo_id">
+              @for (grupo of grupos(); track grupo.id) {
+                <mat-option [value]="grupo.id">{{ grupo.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Analistas a Programar</mat-label>
+            <mat-select formControlName="empleado_ids" multiple>
+              @for (emp of filteredEmpleados(); track emp.id) {
+                <mat-option [value]="emp.id">{{ emp.nombre_completo }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <button mat-button color="primary" type="button" (click)="onSelectAll()">
+            Seleccionar Todos los del Grupo
+          </button>
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperNext type="button" class="btn-next">Siguiente</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Paso 2: Horarios y Límites -->
+    <mat-step [stepControl]="step2Form">
+      <form [formGroup]="step2Form" class="step-content">
+        <ng-template matStepLabel>Horarios</ng-template>
+
+        <div class="form-section">
+          <h3>Defina los Turnos Probables</h3>
+          <p class="section-desc">El sistema rotará entre estos horarios.</p>
+          
+          <div formArrayName="turnos" class="turnos-list">
+            @for (turno of turnos.controls; track $index) {
+              <div [formGroupName]="$index" class="turno-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Inicio</mat-label>
+                  <input matInput type="time" formControlName="inicio">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Fin</mat-label>
+                  <input matInput type="time" formControlName="fin">
+                </mat-form-field>
+                <button mat-icon-button color="warn" (click)="eliminarTurno($index)" [disabled]="turnos.length <= 1">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+          <button mat-stroked-button color="primary" type="button" (click)="agregarTurno()">
+            <mat-icon>add</mat-icon> Agregar Otro Horario Possible
+          </button>
+        </div>
+
+        <div class="form-section">
+          <h3>Límites de Carga de Trabajo</h3>
+          <div class="limits-row">
+            <div class="limit-group">
+              <label>Horas Diarias</label>
+              <div class="inputs">
+                <mat-form-field appearance="outline">
+                  <input matInput type="number" formControlName="horas_max_dia" min="0" max="24">
+                  <span matSuffix>h</span>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <input matInput type="number" formControlName="minutos_max_dia" min="0" max="59">
+                  <span matSuffix>m</span>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="limit-group">
+              <label>Horas Semanales</label>
+              <mat-form-field appearance="outline" class="full-width">
+                <input matInput type="number" formControlName="horas_max_semana">
+                <span matSuffix>h</span>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious type="button">Anterior</button>
+          <button mat-button matStepperNext type="button" class="btn-next">Siguiente</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Paso 3: Cobertura Weekend -->
+    <mat-step [stepControl]="step3Form">
+      <form [formGroup]="step3Form" class="step-content">
+        <ng-template matStepLabel>Cobertura</ng-template>
+
+        <div class="form-section">
+          <h3>Necesidad de Personal en Días Especiales</h3>
+          <p class="section-desc">¿Cuantas personas DEBEN trabajar estos días?</p>
+          
+          <div class="cobertura-grid">
+            <div class="cobertura-item">
+              <mat-icon>calendar_view_week</mat-icon>
+              <label>Sábados</label>
+              <mat-form-field appearance="outline">
+                <input matInput type="number" formControlName="cobertura_sabado">
+              </mat-form-field>
+            </div>
+            <div class="cobertura-item">
+              <mat-icon>event</mat-icon>
+              <label>Domingos</label>
+              <mat-form-field appearance="outline">
+                <input matInput type="number" formControlName="cobertura_domingo">
+              </mat-form-field>
+            </div>
+            <div class="cobertura-item">
+              <mat-icon>flag</mat-icon>
+              <label>Festivos</label>
+              <mat-form-field appearance="outline">
+                <input matInput type="number" formControlName="cobertura_festivo">
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="form-section" style="margin-top: 24px;">
+            <h3>Días de Descanso Permitidos</h3>
+            <p class="section-desc">Seleccione los días en los que el sistema puede programar descansos (vibrará entre ellos).</p>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Días de la semana</mat-label>
+              <mat-select formControlName="dias_descanso" multiple>
+                <mat-option [value]="1">Lunes</mat-option>
+                <mat-option [value]="2">Martes</mat-option>
+                <mat-option [value]="3">Miércoles</mat-option>
+                <mat-option [value]="4">Jueves</mat-option>
+                <mat-option [value]="5">Viernes</mat-option>
+                <mat-option [value]="6">Sábado</mat-option>
+                <mat-option [value]="7">Domingo</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-checkbox formControlName="incluir_festivos" color="primary">
+              Permitir descansos en Días Festivos (Colombia)
+            </mat-checkbox>
+          </div>
+
+          <div class="form-section" style="margin-top: 24px;">
+            <h3>Descansos Consecutivos (Sáb/Dom)</h3>
+            <p class="section-desc">Si se marca como "SÍ", el sistema agrupará el sábado y domingo como un solo bloque. Los festivos se repartirán de forma independiente y equitativa.</p>
+            <mat-radio-group formControlName="descansos_consecutivos" class="consecutive-group">
+              <mat-radio-button [value]="true">
+                <strong>Sí (Consecutivos)</strong>
+                <p>Si descansa el sábado, también descansará el domingo. Rotación estricta de fines de semana.</p>
+              </mat-radio-button>
+              <mat-radio-button [value]="false">
+                <strong>No (Independientes)</strong>
+                <p>Los descansos se pueden repartir individualmente por día.</p>
+              </mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious type="button">Anterior</button>
+          <button mat-button matStepperNext type="button" class="btn-next">Siguiente</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Paso 4: Rotación y Periodo -->
+    <mat-step [stepControl]="step4Form">
+      <form [formGroup]="step4Form" class="step-content">
+        <ng-template matStepLabel>Rotación</ng-template>
+
+        <div class="form-section">
+          <h3>Tipo de Rotación</h3>
+          <mat-radio-group formControlName="tipo_rotacion" class="rotation-group">
+            <mat-radio-button value="fijo">
+              <strong>Turnos Fijos</strong>
+              <p>Mismo horario durante todo el periodo.</p>
+            </mat-radio-button>
+            <mat-radio-button value="semanal">
+              <strong>Rotación Semanal</strong>
+              <p>Cambia el horario cada semana (Efecto escalera o carrusel).</p>
+            </mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        <div class="form-section">
+          <h3>Periodo y Fecha de Inicio</h3>
+          <div class="period-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Alcance del Tiempo</mat-label>
+              <mat-select formControlName="periodo">
+                <mat-option value="semana">1 Semana</mat-option>
+                <mat-option value="quincena">15 Días</mat-option>
+                <mat-option value="mes">Mes Entero</mat-option>
+              </mat-select>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline">
+              <mat-label>¿Cuándo inicia?</mat-label>
+              <input matInput type="date" formControlName="fecha_inicio">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button mat-button matStepperPrevious type="button">Anterior</button>
+          <button 
+            mat-flat-button 
+            color="primary" 
+            type="button" 
+            (click)="finalizarYGuardar()" 
+            class="btn-finalize"
+            [disabled]="isSaving()"
+          >
+            <mat-icon *ngIf="!isSaving()">save</mat-icon>
+            <mat-spinner diameter="20" *ngIf="isSaving()"></mat-spinner>
+            Guardar Plantilla y Generar
+          </button>
+        </div>
+      </form>
+    </mat-step>
+  </mat-stepper>
+</div>

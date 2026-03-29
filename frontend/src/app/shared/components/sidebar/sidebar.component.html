@@ -1,0 +1,77 @@
+<div 
+  class="sidebar" 
+  [class.collapsed]="!isExpanded()"
+>
+  <!-- Header del Sidebar -->
+  <div class="sidebar-header">
+    <div class="logo-section">
+      <div class="logo-container">
+        <mat-icon class="logo-icon">business_center</mat-icon>
+      </div>
+      @if (isExpanded()) {
+        <div class="logo-text">
+          <span class="app-name">WFM</span>
+          <span class="app-full-name">Workforce Management</span>
+        </div>
+      }
+    </div>
+    <button 
+      mat-icon-button 
+      class="toggle-btn"
+      (click)="toggle()"
+      matTooltip="{{ isExpanded() ? 'Cerrar menú' : 'Abrir menú' }}"
+      matTooltipPosition="right"
+    >
+      <mat-icon>{{ isExpanded() ? 'menu_open' : 'menu' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Menú de Navegación -->
+  <nav class="nav-menu">
+    @for (item of menu(); track item.path) {
+      <a 
+        mat-list-item
+        routerLink="{{ item.path }}"
+        routerLinkActive="active"
+        class="nav-item"
+        matTooltip="{{ !isExpanded() ? item.label : '' }}"
+        matTooltipPosition="right"
+      >
+        <mat-icon 
+          matListItemIcon 
+          class="nav-icon"
+          [matBadge]="item.path === '/novedades' && novedadesCount() > 0 ? novedadesCount() : null"
+          matBadgeColor="warn"
+          matBadgeSize="small"
+          matBadgeOverlap="false"
+        >{{ getMenuIcon(item.icon) }}</mat-icon>
+        @if (isExpanded()) {
+          <span matListItemTitle class="nav-label">{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- Sección inferior con información de usuario -->
+  <div class="sidebar-footer">
+    @if (isExpanded()) {
+      <div class="user-info">
+        <div class="user-details">
+          <span class="user-name">{{ userName() }}</span>
+          <span class="user-role">{{ userRole() | titlecase }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- Botón de Logout -->
+    <button 
+      mat-icon-button 
+      class="logout-btn"
+      (click)="logout()"
+      matTooltip="Cerrar sesión"
+      matTooltipPosition="right"
+    >
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</div>

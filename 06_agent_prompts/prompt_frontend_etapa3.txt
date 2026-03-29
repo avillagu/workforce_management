@@ -1,0 +1,268 @@
+# PROMPT PARA AGENTE: FRONTEND DEVELOPER - ETAPA 3 (PROGRAMACIÓN)
+
+## ROL
+Eres el Frontend Engineer del sistema MAPO, experto en Angular 17, TypeScript y diseño premium.
+
+## OBJETIVO
+Desarrollar la interfaz de Programación de Turnos con calendario interactivo, vistas semanal/mensual, y funcionalidades exclusivas para admin.
+
+## CONTEXTO
+- Proyecto: WFM - Etapa 3: Programación de Turnos
+- Frontend existente: Angular 17 con Angular Material
+- API Backend: Endpoints definidos en `prompt_backend_etapa3.txt`
+- Diseño: Estándar premium (coherente con Etapa 2 - Operación)
+- Autenticación: Servicio existente con Signals
+- Tiempo real: Socket.IO cliente
+
+## TAREAS PRINCIPALES
+
+### 1. Componente Principal de Programación
+Posicionarte en `ProgramacionComponent` (ya enrutado en Etapa 1):
+
+- Modificar títulos para que digan explícitamente **"Programación"** de forma dominante y corporativa
+- Estructurar layout con:
+  * Header con título y botones de acción (solo admin)
+  * Toggle para vista semanal/mensual
+  * Contenedor del calendario
+
+### 2. Calendario Visual
+Implementar calendario con las siguientes características:
+
+**Opción A - FullCalendar (Recomendado):**
+- Instalar: `npm install @fullcalendar/angular @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/interaction`
+- Configurar vista por semanas y meses
+- Primera columna muestra nombres de empleados
+- Cada celda muestra turno (hora inicio - fin)
+
+**Opción B - Angular Material Calendar:**
+- Usar MatCalendar personalizado
+- Implementar vista personalizada de grilla
+
+**Requerimientos del calendario:**
+- Vista semanal: 7 columnas (Lun-Dom) × filas (empleados)
+- Vista mensual: 28-31 columnas × filas (empleados)
+- Click en celda vacía → Modal para programar (solo admin)
+- Click en turno existente → Modal para ver/editar/eliminar (solo admin)
+- Colores diferenciados por turno o empleado
+- Tooltip con detalles del turno
+
+### 3. Carga de Empleados
+- `GET /api/usuarios/empleados` (endpoint existente o nuevo)
+- Cargar lista de empleados al iniciar componente
+- Usar Signals para estado reactivo
+- Manejar estados de carga (spinner)
+
+### 4. Carga de Turnos
+- `GET /api/turnos?fecha_inicio=&fecha_fin=`
+- Cargar turnos según rango visible del calendario
+- Mapear datos al formato del calendario
+- Refresh automático tras crear/editar/eliminar
+
+### 5. Modal de Programación Individual (Admin)
+Usar MatDialog con diseño premium:
+
+**Formulario:**
+- Select de empleado (carga asíncrona desde API)
+- DatePicker para seleccionar día
+- TimePicker para hora inicio
+- TimePicker para hora fin
+- Validaciones:
+  * Empleado obligatorio
+  * Fecha obligatoria
+  * Hora inicio < Hora fin
+  * No superposición (validar al enviar)
+
+**Acciones:**
+- Botón "Guardar" → POST /api/turnos
+- Botón "Cancelar" → Cierra modal
+- Feedback con MatSnackBar (éxito/error)
+
+### 6. Modal de Programación Masiva (Admin)
+Dialog más complejo:
+
+**Formulario:**
+- Multi-select de empleados (todos por defecto)
+- DatePicker para fecha inicio del rango
+- DatePicker para fecha fin del rango
+- TimePicker para hora inicio diaria
+- TimePicker para hora fin diaria
+- Checkbox "Excluir fines de semana" (opcional)
+
+**Acciones:**
+- Botón "Programar Masivo" → POST /api/turnos/masivo
+- Confirmación antes de enviar (ej: "Se crearán X turnos")
+- Spinner durante proceso (puede tardar)
+- Feedback detallado (éxitos y errores)
+
+### 7. Modal de Ver/Editar Turno (Admin)
+Al hacer click en turno existente:
+
+**Visualización:**
+- Empleado
+- Fecha
+- Hora inicio
+- Hora fin
+- Fecha de creación
+
+**Acciones (solo admin):**
+- Botón "Editar" → Abre form con datos cargados
+- Botón "Eliminar" → Confirmación → DELETE /api/turnos/:id
+- Botón "Cerrar"
+
+### 8. Tiempo Real (Socket.IO)
+- Instalar: `npm install socket.io-client`
+- Crear servicio `TurnosSocketService`:
+  ```typescript
+  connect() → conecta al backend
+  on('turnos:actualizado') → escucha cambios
+  ```
+- Suscribirse en ProgramacionComponent
+- Al recibir evento:
+  * 'crear' → Agregar turno al calendario
+  * 'actualizar' → Actualizar turno existente
+  * 'eliminar' → Remover turno del calendario
+- Sin recargar página
+
+### 9. Control de Roles
+- Inyectar AuthService existente
+- Ocultar botones de "Programar Individual" y "Programar Masivo" si no es admin:
+  ```typescript
+  isAdmin = this.authService.currentUser().rol === 'admin';
+  ```
+- En calendario, click en celda/turno solo abre modal de edición si es admin
+- Otros roles solo ven tooltip con información
+
+### 10. Diseño Premium
+- Coherente con Etapa 2 (Operación)
+- Angular Material + estilos personalizados SCSS
+- Animaciones suaves en modales
+- Spinners en cargas asíncronas
+- Toast notifications (MatSnackBar) para feedback
+- Responsive (adaptable a diferentes tamaños de pantalla)
+
+## RESTRICCIONES CRÍTICAS
+
+1. **Fechas**: Usar luxon o date-fns para manejo consistente con backend UTC.
+2. **Guards**: El ruta ya está protegida por authGuard existente.
+3. **No hardcodear**: API base desde environment.ts.
+4. **Performance**: Virtual scrolling si hay muchos empleados.
+5. **Validaciones**: Validators.required + validación personalizada de superposición.
+6. **No inventar endpoints**: Usar exactamente los definidos en prompt del Backend.
+
+## INPUTS
+
+- `03_etapa3_programacion.txt` → Requerimientos completos
+- `prompt_backend_etapa3.txt` → Endpoints de la API
+- `architecture_erd.md` → Estructura de datos de turnos
+- AuthService existente → Para rol y usuario actual
+- Estilos de Etapa 2 → Coherencia visual
+
+## OUTPUTS ESPERADOS
+
+1. `frontend/src/app/features/programacion/pages/programacion/programacion.component.ts`
+2. `frontend/src/app/features/programacion/pages/programacion/programacion.component.html`
+3. `frontend/src/app/features/programacion/pages/programacion/programacion.component.scss`
+4. `frontend/src/app/features/programacion/components/` (componentes hijos si aplica)
+5. `frontend/src/app/features/programacion/dialogs/`
+   - `programar-turno-dialog.component.ts` (individual)
+   - `programar-masivo-dialog.component.ts` (masivo)
+   - `ver-turno-dialog.component.ts`
+6. `frontend/src/app/core/services/turnos.service.ts`
+7. `frontend/src/app/core/services/turnos-socket.service.ts`
+8. `frontend/src/app/core/models/turno.model.ts`
+9. Actualización de `current_state.txt` y `log.txt`
+
+## CRITERIOS DE ACEPTACIÓN
+
+- [ ] Calendario renderiza en vistas semanal y mensual
+- [ ] Toggle entre vistas funciona correctamente
+- [ ] Empleados se muestran en primera columna
+- [ ] Turnos se visualizan en celdas correspondientes
+- [ ] Admin ve botones de "Programar Individual" y "Programar Masivo"
+- [ ] No-admin NO ve botones de programación
+- [ ] Modal de programación individual funciona
+- [ ] Modal de programación masiva funciona
+- [ ] Validación de superposiciones muestra error claro
+- [ ] Click en turno existente abre modal de ver/editar
+- [ ] Eliminar turno requiere confirmación
+- [ ] Tiempo real actualiza calendario sin recargar
+- [ ] Diseño es premium y coherente con Etapa 2
+- [ ] Responsive en diferentes tamaños de pantalla
+- [ ] Tests manuales documentados en log.txt
+
+## DEPENDENCIAS
+
+- Backend: Endpoints de turnos funcionando
+- Socket.IO: Configurado en backend
+
+## ESTRUCTURA DE DATOS
+
+### Modelo Turno (TypeScript)
+```typescript
+export interface Turno {
+  id: string;
+  usuario_id: string;
+  empleado_nombre?: string; // Desde JOIN
+  hora_inicio: string; // ISO 8601 UTC
+  hora_fin: string; // ISO 8601 UTC
+  created_at: string;
+}
+```
+
+### Evento Socket
+```typescript
+export interface TurnoSocketEvento {
+  accion: 'crear' | 'actualizar' | 'eliminar';
+  turno: Turno;
+}
+```
+
+## EJEMPLOS DE IMPLEMENTACIÓN
+
+### Servicio de Turnos
+```typescript
+@Injectable({ providedIn: 'root' })
+export class TurnosService {
+  private readonly API_BASE = environment.apiUrl;
+
+  getTurnos(inicio: string, fin: string): Observable<Turno[]> {
+    return this.http.get<Turno[]>(
+      `${this.API_BASE}/turnos?fecha_inicio=${inicio}&fecha_fin=${fin}`
+    );
+  }
+
+  crearTurno(turno: Partial<Turno>): Observable<Turno> {
+    return this.http.post<Turno>(`${this.API_BASE}/turnos`, turno);
+  }
+
+  programacionMasiva(datos: ProgramacionMasivaDto): Observable<any> {
+    return this.http.post(`${this.API_BASE}/turnos/masivo`, datos);
+  }
+}
+```
+
+### Manejo de Superposición
+```typescript
+if (form.invalid) return;
+
+this.turnosService.crearTurno(form.value).subscribe({
+  next: (turno) => {
+    this.snackBar.open('Turno programado exitosamente', 'Cerrar', { duration: 3000 });
+    this.dialogRef.close(turno);
+  },
+  error: (error) => {
+    if (error.status === 409) {
+      this.snackBar.open(
+        'Conflicto: El empleado ya tiene un turno en ese horario',
+        'Cerrar',
+        { duration: 5000 }
+      );
+    } else {
+      this.snackBar.open('Error al programar turno', 'Cerrar', { duration: 3000 });
+    }
+  }
+});
+```
+
+---
+FIN DEL PROMPT

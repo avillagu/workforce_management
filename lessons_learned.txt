@@ -1,0 +1,45 @@
+# WORKFORCE MANAGEMENT - LESSONS LEARNED & OPORTUNIDADES DE MEJORA
+
+Este documento recopila los aprendizajes técnicos y decisiones de arquitectura tomados durante las distintas etapas del proyecto. Su propósito es guiar a futuros agentes y desarrolladores para evitar errores comunes y mantener la calidad "Enterprise".
+
+---
+## ETAPA 1 (Base de Datos, Autenticación y Sidebar Angular)
+
+### 1. Alias de Rutas en Angular (Path Aliases)
+- **Problema encontrado:** Las importaciones relativas con muchos saltos (ej. `../../../core/services/auth.service`) generan errores de compilación (`TS2307`, `TS-992003`) y rompen los módulos inyectables.
+- **Acción Correctiva OBLIGATORIA:** En cualquier módulo o componente de Angular, SIEMPRE usar *Path Aliases* absolutos. El proyecto ya cuenta con la configuración en el `tsconfig.json`. (Ejemplo de uso: `import { AuthService } from '@core/services/auth.service';`).
+
+### 2. Reinicio en Caliente del Backend (Nodemon)
+- **Problema encontrado:** Ejecutar el servidor con `npm start` (usando el intérprete estándar de `node`) provoca que el servidor cargue la aplicación una sola vez. Cuando el Agente Fullstack modifica los archivos, los cambios no se aplican porque el servidor "se queda pegado" en la versión antigua del código.
+- **Acción Correctiva OBLIGATORIA:** Para desarrollo local, ejecutar siempre `npm run dev` en la carpeta `backend/`. Esto invoca a `nodemon`, garantizando que cada vez que un agente modifique un código, el servidor se reinicie automáticamente y las pruebas sean sobre código fresco.
+
+### 3. Resiliencia de Base de Datos y Degradación Controlada (503 vs 500)
+- **Problema encontrado:** Al recibir variables de entorno `.env` incorrectas (ej. sin contraseña o BD equivocada), el sistema backend intentaba las querys a la fuerza, arrojando errores "500 Internal Server Error" desde Node y quebrando el sistema silenciosamente.
+- **Acción Correctiva OBLIGATORIA:** Se implementó una lógica rigurosa en `database.js` que intenta hasta 5 reconexiones en caso de falla. Previo a cualquier llamado a la API, los controladores DEBEN verificar la salud de la BD (`getConnectionStatus()`). Si está caída, deben retornar de inmediato un Error HTTP 503 ("Service Unavailable") dando aviso explícito al Frontend sobre el fallo de BD, previniendo cuelgues del API.
+
+### 4. Búsqueda de Eschema (`search_path`) en PostgreSQL
+- **Problema encontrado:** El uso de extensiones avanzadas (ej. `pgcrypto` para la encriptación de passwords) falla al tratar de buscar funciones nativas como `gen_salt()` si la extensión queda atrapada en un esquema específico y restringido.
+- **Acción Correctiva OBLIGATORIA:** En los scripts `init_db.sql` u otros futuros, forzar siempre que la instalación de extensiones genéricas se haga en el esquema global: `CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA public;`.
+
+### 5. Alucinación de Esquemas SQL por el API (Desacople Peligroso)
+- **Problema encontrado:** El Agente Fullstack no analizó correctamente el archivo `init_db.sql` del DBA e intentó consultar en su lógica JS columnas inexistentes (como `email` o `activo`), lo que causaría el colapso instantáneo de la base de datos al arrancar el backend.
+- **Acción Correctiva OBLIGATORIA (Prevención):** Los Agentes de Backend NUNCA deben asumir ni inventar columnas en base a la lógica de negocio. DEBEN leer estrictamente el archivo `architecture_erd.md` o el script de base de datos antes de redactar cualquier query en Node.js. Toda query debe extraer (`SELECT id, username...`) explícitamente solo lo diseñado por el DBA.
+
+### 6. Falsa sensación de cumplimiento con "Lógica Anti-Cachos" (UTC)
+- **Problema encontrado:** El Agente fue instruido a usar la librería `luxon` para garantizar el horario UTC puro. Logró instalar el paquete en el `package.json`, pero no lo invocó en su código TypeScript/JavaScript, confiando ingenuamente en el manejo nativo del framework (`pg`).
+- **Acción Correctiva OBLIGATORIA:** No basta con importar una librería. Los Agentes Fullstack y Backend DEBEN demostrar el uso y manipulación de esas librerías inyectándolas actívamente en las queries o controladores dictados en los Prompts (Ej: `DateTime.utc().toISO()`).
+
+---
+## ETAPA 2 (Módulo de Operación: Grupos y Empleados)
+
+### 7. Alucinación de Propiedades en Frontend (Filtros Fantasma)
+- **Problema encontrado:** El Agente Frontend inventó y aplicó un filtro (`.filter(g => g.activo)`) asumiendo que el Backend enviaría una propiedad booleana de estado. Como esta propiedad no existía en el ERD (`02_operacion.sql`), el array colapsaba silenciamente, bloqueando la Selección de Grupos en los formularios.
+- **Acción Correctiva OBLIGATORIA:** Los Agentes de Interfaz Gráfica (Frontend) tienen PROHIBIDO asumir estructuras de datos o inventar tipados de TypeScript (`interfaces` / `models`). Antes de construir la vista, deben extraer el contrato riguroso leyendo explícitamente el archivo `architecture_erd.md` o el diccionario `swagger.js` generado por su contraparte del Backend.
+
+### 8. Alineación Estricta Front-Back en Nombres Mapeados
+- **Problema encontrado:** El Frontend inventó la propiedad `nombre_completo` para su formulario y payload, mientras que la base de datos y el Backend esperaban estrictamente `full_name`. Esto causó un error de inserción silencioso, ya que la base de datos rechazaba la consulta por no encontrar el campo correcto.
+- **Acción Correctiva OBLIGATORIA:** El Frontend debe mapear SIEMPRE sus datos (`payloads`, `formularios` y `models`) a los nombres exactos definidos en el diccionario de la base de datos (camelCase a snake_case, etc.). 
+
+### 9. Alucinación de Columnas CRUD
+- **Problema encontrado:** El modelo frontend y la validación del backend incluían capturas para la data `email` y `activo`, elementos que en realidad no existían en las tablas de PostgreSQL (`wfm_auth.usuarios`). Esto hizo fallar visualmente el listado de registros, dando la impresión de que no había empleados.
+- **Acción Correctiva OBLIGATORIA:** Revisar dos veces el diseño de la base de datos antes de incrustar columnas en los métodos de `SELECT`, `INSERT` o en la validación `express-validator` del Backend. No generar campos sólo "porque son comunes en formularios".

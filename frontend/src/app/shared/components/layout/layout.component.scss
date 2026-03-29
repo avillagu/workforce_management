@@ -1,0 +1,209 @@
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  background: var(--background-color);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--background-color);
+  min-width: 0; /* Evita que crezca más allá del flex container */
+  overflow-x: hidden;
+
+  &.sidebar-collapsed {
+    margin-left: 64px;
+  }
+}
+
+// Top Header
+.top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .page-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin: 0;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 20px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 28px;
+      background: linear-gradient(to bottom, #3b82f6, #60a5fa);
+      border-radius: 4px;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .user-menu-btn {
+    padding: 6px 16px;
+    border-radius: 12px;
+    background: #f8fbff;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: auto;
+    min-height: 48px;
+
+    &:hover {
+      background: #ffffff;
+      border-color: #3b82f6;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .user-profile-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .user-text-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .user-name {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .user-sub-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-login {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .info-dot {
+      width: 3px;
+      height: 3px;
+      background: #cbd5e1;
+      border-radius: 50%;
+    }
+
+    .user-role-badge {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      
+      &.admin { background: #fee2e2; color: #ef4444; }
+      &.supervisor { background: #fef3c7; color: #d97706; }
+      &.empleado { background: #dcfce7; color: #16a34a; }
+    }
+
+    .user-group-tag {
+      font-size: 9px;
+      font-weight: 600;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .user-avatar-circle {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+
+      mat-icon {
+        color: white !important;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .dropdown-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+    }
+  }
+}
+
+// Footer styling removed for simplicity - can be added back if needed
+
+// Page Content
+.page-content {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  background: var(--background-color);
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 64px;
+  }
+
+  .top-header {
+    padding: 12px 16px;
+
+    .page-title {
+      font-size: 18px;
+    }
+
+    .user-name {
+      display: none;
+    }
+  }
+
+  .page-content {
+    padding: 16px;
+  }
+}

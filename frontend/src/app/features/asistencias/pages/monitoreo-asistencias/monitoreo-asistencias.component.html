@@ -1,0 +1,122 @@
+<div class="monitoreo-container">
+  <header class="header-monitoreo">
+    <div class="header-info">
+      <mat-icon class="header-icon">monitor_heart</mat-icon>
+      <div>
+        <h1>Monitoreo de Asistencias</h1>
+        <p>Vista en tiempo real del estado de todo el personal operativo</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-flat-button class="btn-export" (click)="abrirExportar()">
+        <mat-icon>file_download</mat-icon>
+        Exportar Reporte
+      </button>
+    </div>
+  </header>
+
+  <mat-divider style="margin-bottom: 24px;"></mat-divider>
+
+  <!-- Filtros -->
+  <div class="filters-card">
+    <mat-form-field appearance="outline" class="group-select">
+      <mat-label>Filtrar por Grupo</mat-label>
+      <mat-select [value]="selectedGrupoId()" (selectionChange)="onGrupoChange($event.value)">
+        <mat-option value="">Todos los Grupos</mat-option>
+        @for (grupo of grupos(); track grupo.id) {
+          <mat-option [value]="grupo.id">{{ grupo.nombre }}</mat-option>
+        }
+      </mat-select>
+      <mat-icon matPrefix>groups</mat-icon>
+    </mat-form-field>
+
+    <div class="legend">
+      <div class="legend-item"><span class="dot d-success"></span> Disponible</div>
+      <div class="legend-item"><span class="dot d-warning"></span> Descanso</div>
+      <div class="legend-item"><span class="dot d-info"></span> En baño</div>
+      <div class="legend-item"><span class="dot d-default"></span> Fuera de turno</div>
+      <div class="legend-item"><span class="dot d-danger"></span> Alerta (>30m)</div>
+    </div>
+  </div>
+
+  <!-- Tabla de Monitoreo -->
+  <mat-card class="monitoreo-card">
+    <mat-card-content class="table-container">
+      <table mat-table [dataSource]="filteredEmpleados()" class="monitoreo-table">
+        <!-- Empleado -->
+        <ng-container matColumnDef="empleado">
+          <th mat-header-cell *matHeaderCellDef>Empleado</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="emp-row-info">
+              <div class="avatar-mini">{{ row.nombre.slice(0, 2).toUpperCase() }}</div>
+              <span class="emp-name">{{ row.nombre }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Grupo -->
+        <ng-container matColumnDef="grupo">
+          <th mat-header-cell *matHeaderCellDef>Grupo</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="grupo-label">{{ row.grupo_nombre }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Estado -->
+        <ng-container matColumnDef="estado">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="badge-v2" [class]="'badge-v2-' + getColorEstado(row.estado)">
+              {{ getLabelEstado(row.estado) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Hora Inicio -->
+        <ng-container matColumnDef="hora_inicio">
+          <th mat-header-cell *matHeaderCellDef>Hora Inicio</th>
+          <td mat-cell *matCellDef="let row" class="time-cell">
+            {{ row.hora_inicio | date:'HH:mm' }}
+          </td>
+        </ng-container>
+
+        <!-- Tiempo en Estado -->
+        <ng-container matColumnDef="tiempo_en_estado">
+          <th mat-header-cell *matHeaderCellDef>Tiempo en Estado</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="duration-badge" [class.alert]="row.alerta" [matTooltip]="row.alerta ? 'Descanso excedido (>30 min)' : ''">
+              {{ row.tiempo_en_estado || 'Calculando...' }}
+              <mat-icon *ngIf="row.alerta" class="alert-icon">warning</mat-icon>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Total Día -->
+        <ng-container matColumnDef="total_dia">
+          <th mat-header-cell *matHeaderCellDef>Total Día</th>
+          <td mat-cell *matCellDef="let row" class="total-cell">
+            {{ row.tiempo_total_dia || '-' }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.flash-update]="isUpdating(row.usuario_id)"></tr>
+      </table>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Sincronizando estados...</p>
+        </div>
+      }
+
+      @if (!isLoading() && filteredEmpleados().length === 0) {
+        <div class="empty-state">
+          <mat-icon>people_outline</mat-icon>
+          <h3>No hay personal activo</h3>
+          <p>No se encontraron registros de asistencia para este filtro.</p>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,53 @@
+DISEÑO DE ARQUITECTURA — Workforce Management Web App
+
+DESCRIPCIÓN GENERAL:
+Sistema web con arquitectura cliente-servidor desacoplada. El frontend consume una API RESTful proporcionada por el backend, el cual interactúa con una base de datos relacional.
+
+COMPONENTES DEL SISTEMA:
+- Frontend: Aplicación Single Page (SPA) desarrollada en Angular.
+- Backend: API REST construida con Node.js y Express.
+- Base de datos: PostgreSQL (Relacional) para integridad de datos de empleados y turnos.
+  - Diagrama ERD: Se define y gobierna estrictamente en architecture_erd.md.
+- APIs: Comunicación vía JSON sobre HTTP.
+  - Documentación: Swagger UI integrado nativamente en Express backend.
+
+FLUJO DE DATOS:
+1. Usuario ingresa credenciales en Angular.
+2. Angular envía petición POST a Node.js.
+3. Node.js valida credenciales contra PostgreSQL.
+4. Si es correcto, Node.js devuelve un token (JWT) y el estado del menú.
+5. Angular renderiza el Sidebar y permite navegación a Dashboard, Programación, etc.
+
+TECNOLOGÍAS:
+- Lenguajes: TypeScript (Angular), JavaScript/Node.js.
+- Frameworks: Angular (Frontend), Express (Backend).
+- Infraestructura: Local (Entorno de desarrollo del Director con pgAdmin).
+
+INTEGRACIONES:
+- pgAdmin para gestión visual de la base de datos.
+
+ESCALABILIDAD:
+- Horizontal en el backend. El uso de PostgreSQL permite manejar los 50 empleados y escalar si es necesario en el futuro.
+
+SEGURIDAD:
+- Hash de contraseñas (bcrypt o similar).
+- Autenticación basada en tokens.
+- Validación de esquemas de datos en el backend.
+- Guards de ruta (El Guardián) en Angular: Protección estricta en frontend contra accesos no autorizados.
+
+MANEJO DE HORAS (UTC):
+- Lógica 'Anti-Cachos': Todas las fechas se guardan en PostgreSQL como TIMESTAMPTZ usando hora UTC.
+- Transformación a ISO 8601 o zonas locales en la capa de respuesta (Node.js) enviada al Frontend.
+
+DECISIONES CLAVE:
+- Node.js + Express: Ideal para rapidez de desarrollo en esta primera etapa.
+- Angular: Proporciona la estructura profesional y robusta requerida por el Director.
+- PostgreSQL: Garantiza consistencia de datos necesaria para programación de turnos compleja.
+
+RIESGOS TÉCNICOS:
+- Configuración de CORS entre el puerto de Angular y Node.js.
+- Gestión de sesiones/tokens en el frontend.
+
+DEPENDENCIAS ENTRE COMPONENTES:
+- Angular depende de la disponibilidad de la API de Node.js.
+- Node.js depende de la conexión activa a PostgreSQL.

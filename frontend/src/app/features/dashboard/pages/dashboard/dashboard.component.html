@@ -1,0 +1,51 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <p>Resumen en tiempo real de la operación hoy</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Consultando estadísticas...</p>
+    </div>
+  } @else {
+    <div class="stats-grid">
+      @for (stat of stats(); track stat.title) {
+        <mat-card 
+          class="stat-card" 
+          [class.clickable]="isAdminOrSupervisor()"
+          (click)="isAdminOrSupervisor() ? irADetalle(stat.route) : null"
+          [matTooltip]="isAdminOrSupervisor() ? 'Ver detalle de ' + stat.title.toLowerCase() : ''"
+          matTooltipPosition="above"
+        >
+          <div class="stat-content">
+            <div class="stat-icon" [style.background-color]="stat.bg">
+              <mat-icon [style.color]="stat.color">{{ stat.icon }}</mat-icon>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stat.value }}</span>
+              <span class="stat-label">{{ stat.title }}</span>
+            </div>
+            <mat-icon class="arrow-icon" *ngIf="isAdminOrSupervisor()">chevron_right</mat-icon>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <div class="welcome-section">
+    <mat-card class="welcome-card">
+      <div class="welcome-content">
+        <mat-icon>info</mat-icon>
+        <div>
+          <h2>Estado del Sistema</h2>
+          <p>Módulo de Gestión de Personal Activo</p>
+          <p class="description">
+            Desde este panel puedes monitorear la ocupación del personal, revisar los turnos publicados 
+            y gestionar las novedades pendientes de aprobación hoy.
+          </p>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,272 @@
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: var(--sidebar-bg); // Gris oscuro profesional
+  color: #f8fafc;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  overflow: hidden;
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+
+  &.collapsed {
+    width: 64px;
+
+    .nav-item {
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+
+      .nav-icon {
+        margin-right: 0;
+      }
+    }
+
+    .sidebar-footer {
+      justify-content: center;
+      padding: 16px 0;
+    }
+  }
+}
+
+// Header del Sidebar
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 16px;
+  min-height: 80px;
+
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    overflow: hidden;
+  }
+
+  .logo-container {
+    width: 40px;
+    height: 40px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.2);
+      transform: rotate(-5deg) scale(1.05);
+    }
+  }
+
+  .logo-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #60a5fa; // Azul brillante
+    filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.3));
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    white-space: nowrap;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .app-name {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #f8fafc;
+  }
+
+  .app-full-name {
+    font-size: 11px;
+    font-weight: 400;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+  }
+
+  .toggle-btn {
+    color: #94a3b8;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #60a5fa;
+    }
+  }
+}
+
+// Menú de Navegación
+.nav-menu {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+}
+
+.nav-item {
+  margin: 4px 12px;
+  border-radius: 12px; // Bordes más suaves estilo DeskTime
+  transition: all 0.2s ease;
+  min-height: 48px;
+  cursor: pointer;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  color: #94a3b8;
+  text-decoration: none;
+
+  .nav-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    color: inherit;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .nav-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: inherit;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+
+    .nav-icon {
+      transform: scale(1.05);
+    }
+  }
+
+  &.active {
+    background: rgba(37, 99, 235, 0.15); // Azul al fondo
+    color: #60a5fa; // Texto en azul brillante
+
+    .nav-icon {
+      color: #60a5fa;
+    }
+
+    .nav-label {
+      font-weight: 600;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 20%;
+      height: 60%;
+      width: 4px;
+      background: #3b82f6;
+      border-radius: 0 4px 4px 0;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    }
+  }
+
+  ::ng-deep {
+    .mat-mdc-list-item-unscoped-content {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+  }
+}
+
+// Footer del Sidebar
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 72px;
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .user-details {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-role {
+    font-size: 11px;
+    font-weight: 400;
+    color: #94a3b8;
+    text-transform: capitalize;
+  }
+
+  .logout-btn {
+    color: #94a3b8;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+  }
+}
+
+// Divider personalizado
+mat-divider {
+  border-color: var(--border-color);
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    
+    &.collapsed {
+      transform: translateX(-100%);
+    }
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
+}

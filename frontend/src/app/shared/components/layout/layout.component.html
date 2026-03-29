@@ -1,0 +1,66 @@
+<div class="layout-container">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="main-content" [class.sidebar-collapsed]="!isSidebarExpanded()">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <h1 class="page-title">{{ pageTitle() }}</h1>
+      </div>
+      <div class="header-right">
+        <!-- User Menu -->
+        <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-btn">
+          <div class="user-profile-summary">
+            <div class="user-text-info">
+              <span class="user-name">{{ userName() }}</span>
+              <div class="user-sub-info">
+                <span class="user-login">&#64;{{ userLogin() }}</span>
+                <span class="info-dot"></span>
+                <span class="user-role-badge" [class]="userRole()">{{ userRole() | titlecase }}</span>
+                @if (userGroup()) {
+                  <span class="info-dot"></span>
+                  <span class="user-group-tag">{{ userGroup() }}</span>
+                }
+              </div>
+            </div>
+            <div class="user-avatar-circle">
+              <mat-icon>account_circle</mat-icon>
+            </div>
+            <mat-icon class="dropdown-icon">expand_more</mat-icon>
+          </div>
+        </button>
+
+        <mat-menu #userMenu="matMenu" class="user-menu" panelClass="user-menu-panel">
+          <div class="user-menu-header">
+            <div class="header-icon-box">
+              <mat-icon>person_outline</mat-icon>
+            </div>
+            <div class="user-info-text">
+              <div class="user-menu-name">{{ userName() }}</div>
+              <div class="user-menu-login">&#64;{{ userLogin() }}</div>
+              <div class="user-menu-role">{{ userRole() | titlecase }}</div>
+              @if (userGroup()) {
+                <div class="user-menu-group">{{ userGroup() }}</div>
+              }
+            </div>
+          </div>
+          <button mat-menu-item (click)="abrirPerfil()">
+            <mat-icon>manage_accounts</mat-icon>
+            <span>Perfil</span>
+          </button>
+          <button mat-menu-item (click)="logout()" class="logout-item">
+            <mat-icon>logout</mat-icon>
+            <span>Cerrar sesión</span>
+          </button>
+        </mat-menu>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
