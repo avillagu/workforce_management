@@ -84,6 +84,10 @@ export class LayoutComponent {
     this.pageTitle.set('Workforce Management');
   }
 
+  toggleSidebar(): void {
+    this.uiService.toggleSidebar();
+  }
+
   logout(): void {
     this.authService.logout();
   }

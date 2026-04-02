@@ -1,31 +1,46 @@
 const { DateTime } = require('luxon');
 
+/**
+ * Calculador de festivos para Colombia (Ley Emiliani)
+ * Implementación Anti-Cachos (UTC-safe)
+ */
 class ColombiaHolidays {
+  /**
+   * Verifica si una fecha es festiva en Colombia
+   * @param {DateTime} date Luxon DateTime object
+   */
   static isHoliday(date) {
+    if (!date || !date.isValid) return false;
     const holidays = this.getHolidaysForYear(date.year);
-    return holidays.some(h => h.hasSame(date, 'day'));
+    // Comparar usando el mismo zone (UTC preferiblemente)
+    return holidays.some(h => h.month === date.month && h.day === date.day);
   }
 
+  /**
+   * Genera lista de festivos para un año específico
+   */
   static getHolidaysForYear(year) {
     const list = [];
-    // 1. Fijos
-    list.push(DateTime.fromObject({ year, month: 1, day: 1 }));
-    list.push(DateTime.fromObject({ year, month: 5, day: 1 }));
-    list.push(DateTime.fromObject({ year, month: 7, day: 20 }));
-    list.push(DateTime.fromObject({ year, month: 8, day: 7 }));
-    list.push(DateTime.fromObject({ year, month: 12, day: 8 }));
-    list.push(DateTime.fromObject({ year, month: 12, day: 25 }));
+    const opts = { zone: 'utc' };
 
-    // 2. Ley Emiliani (Mover a lunes)
-    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 1, day: 6 })));
-    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 3, day: 19 })));
-    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 6, day: 29 })));
-    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 8, day: 15 })));
-    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 10, day: 12 })));
-    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 11, day: 1 })));
-    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 11, day: 11 })));
+    // 1. Fijos (No se mueven por Ley Emiliani)
+    list.push(DateTime.fromObject({ year, month: 1, day: 1 }, opts));
+    list.push(DateTime.fromObject({ year, month: 5, day: 1 }, opts));
+    list.push(DateTime.fromObject({ year, month: 7, day: 20 }, opts));
+    list.push(DateTime.fromObject({ year, month: 8, day: 7 }, opts));
+    list.push(DateTime.fromObject({ year, month: 12, day: 8 }, opts));
+    list.push(DateTime.fromObject({ year, month: 12, day: 25 }, opts));
 
-    // 3. Pascua
+    // 2. Ley Emiliani (Se mueven al siguiente lunes si no caen lunes)
+    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 1, day: 6 }, opts))); // Reyes
+    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 3, day: 19 }, opts))); // San José
+    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 6, day: 29 }, opts))); // San Pedro
+    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 8, day: 15 }, opts))); // Asunción
+    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 10, day: 12 }, opts))); // Raza
+    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 11, day: 1 }, opts))); // Todos los Santos
+    list.push(this.moveToMonday(DateTime.fromObject({ year, month: 11, day: 11 }, opts))); // Ind. Cartagena
+
+    // 3. Basados en Pascua (Semana Santa y móviles)
     const easter = this.calculateEaster(year);
     list.push(easter.minus({ days: 3 })); // Jueves Santo
     list.push(easter.minus({ days: 2 })); // Viernes Santo
@@ -36,11 +51,17 @@ class ColombiaHolidays {
     return list;
   }
 
+  /**
+   * Mueve la fecha al siguiente lunes si no es lunes.
+   */
   static moveToMonday(date) {
     if (date.weekday === 1) return date;
     return date.plus({ days: 8 - date.weekday });
   }
 
+  /**
+   * Algoritmo de Butcher-Meeus para cálculo de Pascua
+   */
   static calculateEaster(year) {
     const a = year % 19;
     const b = Math.floor(year / 100);
@@ -56,7 +77,7 @@ class ColombiaHolidays {
     const m = Math.floor((a + 11 * h + 22 * l) / 451);
     const month = Math.floor((h + l - 7 * m + 114) / 31);
     const day = ((h + l - 7 * m + 114) % 31) + 1;
-    return DateTime.fromObject({ year, month, day });
+    return DateTime.fromObject({ year, month, day }, { zone: 'utc' });
   }
 }
 

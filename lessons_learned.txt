@@ -43,3 +43,46 @@ Este documento recopila los aprendizajes técnicos y decisiones de arquitectura 
 ### 9. Alucinación de Columnas CRUD
 - **Problema encontrado:** El modelo frontend y la validación del backend incluían capturas para la data `email` y `activo`, elementos que en realidad no existían en las tablas de PostgreSQL (`wfm_auth.usuarios`). Esto hizo fallar visualmente el listado de registros, dando la impresión de que no había empleados.
 - **Acción Correctiva OBLIGATORIA:** Revisar dos veces el diseño de la base de datos antes de incrustar columnas en los métodos de `SELECT`, `INSERT` o en la validación `express-validator` del Backend. No generar campos sólo "porque son comunes en formularios".
+
+---
+## ETAPA 3 (Despliegue en Servidor VPS y Bug de Empleados Desaparecidos)
+
+### 10. Sobreescritura Silenciosa del Campo `role` al Editar Empleados
+- **Problema encontrado:** La función `actualizarEmpleado` en `usuarioController.js` tomaba el valor `rol` directamente del `req.body` y lo usaba en el `UPDATE` SQL sin validar si venía vacío, `undefined` o con un valor diferente al esperado. Si el formulario del Frontend no enviaba el rol correctamente, el campo `role` en la base de datos se corrompía (cambiaba a `NULL`, cadena vacía o un valor no deseado), causando que el empleado "desapareciera" de la lista que filtraba por `WHERE u.role = 'empleado'`.
+- **Acción Correctiva OBLIGATORIA:** En cualquier operación `UPDATE`, si un campo crítico (como `role`, `status`, `activo`) no viene explícitamente en el payload del Frontend, el Backend DEBE preservar el valor actual de la base de datos. Se implementó la lógica: `const finalRole = rol || currentRes.rows[0].role;` que consulta primero el valor existente antes de sobreescribirlo.
+
+### 11. Separación Estricta del Archivo `.env` entre Entornos (Local vs Servidor)
+- **Problema encontrado:** Al comprimir la carpeta `backend/` completa (incluyendo el `.env`) y subirla al servidor VPS, se sobreescribió la configuración de producción con los valores de desarrollo local. Esto causó que el servidor intentara conectarse a la base de datos `Workforce_Management_AAA` (nombre local) en vez de `wfm_db` (nombre del servidor), y con el usuario `postgres` en vez de `wfm_user`, generando errores fatales de autenticación y conexión.
+- **Acción Correctiva OBLIGATORIA:** Los Agentes NUNCA deben incluir el archivo `.env` en los ZIPs de despliegue. Al comprimir el backend, SIEMPRE excluir `.env` y `node_modules`. Si por error se sobreescribe, restaurar inmediatamente desde el backup: `cp /home/admin/.env.backup /home/admin/workforce_management/backend/.env`. Los valores del servidor son: `DB_NAME=wfm_db`, `DB_USER=wfm_user`, `DB_SCHEMA=wfm_auth`.
+
+### 12. Gestión de Procesos con PM2 (NO usar kill/nohup)
+- **Problema encontrado:** Se intentó reiniciar el servidor Node.js usando `sudo killall -9 node` y `nohup node src/server.js &`. Sin embargo, el servidor está gestionado por **PM2** (app name: `wfm-api`), que automáticamente reiniciaba el proceso viejo cada vez que se mataba, impidiendo que el nuevo código tomara efecto. Esto generó errores `EADDRINUSE: address already in use :::3000` repetidos e irrecuperables con los métodos tradicionales de `kill`.
+- **Acción Correctiva OBLIGATORIA:** Los Agentes DEBEN usar exclusivamente comandos de PM2 para gestionar el backend en el servidor:
+  - Reiniciar: `pm2 restart wfm-api`
+  - Ver logs: `pm2 logs wfm-api --lines 20`
+  - Ver estado: `pm2 status`
+  - PROHIBIDO usar: `killall node`, `pkill -f server.js`, `nohup node ...`
+
+### 13. URL del API en el Frontend: Nunca Apuntar a `localhost` en Producción
+- **Problema encontrado:** El archivo `environment.ts` del Frontend contenía `apiUrl: 'http://localhost:3000/api'`. Al compilar el build de producción y subirlo al servidor, la página web intentaba conectarse al `localhost` del navegador del usuario (su propia PC), no al servidor VPS. Esto causó errores `ERR_CONNECTION_REFUSED` en cascada y daba la impresión de que el servidor estaba caído.
+- **Acción Correctiva OBLIGATORIA:** El archivo `frontend/src/environments/environment.ts` DEBE tener `apiUrl: '/api'` (ruta relativa, sin `localhost`). El servidor Nginx en el VPS se encarga internamente de redirigir `/api` al puerto 3000 donde corre Node.js. Antes de compilar para producción, verificar SIEMPRE este valor.
+
+### 14. Peligro de SQL sin Cláusula WHERE Restrictiva
+- **Problema encontrado:** Al intentar recuperar empleados con roles incorrectos, se ejecutó el comando `UPDATE wfm_auth.usuarios SET role = 'empleado';` sin cláusula `WHERE` restrictiva. Esto convirtió a TODOS los usuarios (incluido el administrador principal) en "empleados", eliminando los permisos de administración y bloqueando el acceso al módulo de Operación.
+- **Acción Correctiva OBLIGATORIA:** Los Agentes NUNCA deben ejecutar sentencias `UPDATE` o `DELETE` sin una cláusula `WHERE` específica. Para cambios masivos, siempre excluir cuentas críticas: `UPDATE wfm_auth.usuarios SET role = 'empleado' WHERE username != 'admin';`. Antes de ejecutar cualquier SQL que modifique datos, hacer primero un `SELECT` con la misma condición para verificar las filas afectadas.
+
+### 15. Filtros Restrictivos en Queries de Listado que Ocultan Registros Válidos
+- **Problema encontrado:** La función `listarEmpleados` del Backend tenía un `WHERE u.role = 'empleado'` fijo en la query SQL. Esto significaba que si un usuario administrador le asignaba el rol de "Supervisor" o "Administrador" a un empleado, este desaparecía de inmediato de la tabla de la interfaz porque ya no cumplía con la condición del filtro.
+- **Acción Correctiva OBLIGATORIA:** En las queries de listados administrativos que el rol `admin` utiliza para gestionar personal, NO aplicar filtros restrictivos por rol a nivel de base de datos. El filtrado por rol debe hacerse a nivel de Frontend (con dropdowns o filtros opcionales en la tabla), NO a nivel de SQL. Se eliminó la cláusula `WHERE u.role = 'empleado'` del `listarEmpleados` para que el administrador pueda ver y gestionar a todos los usuarios sin importar su rol.
+
+### 16. Entender la Arquitectura del Servidor Antes de Intervenir
+- **Problema encontrado:** Se realizaron múltiples intentos de despliegue sin entender primero la arquitectura del servidor (Nginx como proxy reverso, PM2 como gestor de procesos, PostgreSQL con usuario y base de datos distintos al entorno local). Esto resultó en una cadena de errores que tomaron más de 1 hora en resolver.
+- **Acción Correctiva OBLIGATORIA:** Antes de cualquier operación de despliegue, los Agentes DEBEN ejecutar los siguientes comandos de reconocimiento:
+  ```
+  pm2 status                    # Ver si hay gestor de procesos
+  cat .env                      # Ver configuración del entorno servidor
+  ps aux | grep node            # Ver procesos activos
+  sudo -u postgres psql -l      # Ver bases de datos disponibles
+  nginx -t                      # Ver configuración del proxy
+  ```
+  Solo después de entender el entorno, proceder con los cambios.

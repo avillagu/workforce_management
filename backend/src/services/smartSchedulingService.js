@@ -2,60 +2,82 @@ const { pool } = require('../config/database');
 const { DateTime } = require('luxon');
 const turnosService = require('./turnosService');
 const ColombiaHolidays = require('../utils/colombiaHolidays');
+const turnosSocket = require('../websocket/turnosSocket');
+const crypto = require('crypto');
 
 /**
  * Obtiene todas las configuraciones inteligentes
  */
 const getConfiguraciones = async () => {
-  const query = `
-    SELECT c.*, g.nombre as grupo_nombre 
-    FROM wfm_auth.configuraciones_inteligentes c
-    LEFT JOIN wfm_auth.grupos g ON c.grupo_id = g.id
-    ORDER BY c.created_at DESC;
-  `;
-  const { rows } = await pool.query(query);
-  return rows;
+  try {
+    const query = `
+      SELECT c.*, g.nombre as grupo_nombre 
+      FROM wfm_auth.configuraciones_inteligentes c
+      LEFT JOIN wfm_auth.grupos g ON c.grupo_id = g.id
+      ORDER BY c.created_at DESC;
+    `;
+    const { rows } = await pool.query(query);
+    return rows;
+  } catch (error) {
+    console.error('Error en service.getConfiguraciones:', error);
+    throw error;
+  }
 };
 
 /**
  * Crea una configuración inteligente
  */
 const crearConfiguracion = async (data) => {
-  const { nombre, grupo_id, configuracion, creado_por } = data;
-  const query = `
-    INSERT INTO wfm_auth.configuraciones_inteligentes (nombre, grupo_id, configuracion, creado_por)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *;
-  `;
-  const { rows } = await pool.query(query, [nombre, grupo_id, JSON.stringify(configuracion), creado_por]);
-  return rows[0];
+  try {
+    const { nombre, grupo_id, configuracion, creado_por } = data;
+    const query = `
+      INSERT INTO wfm_auth.configuraciones_inteligentes (nombre, grupo_id, configuracion, creado_por)
+      VALUES ($1, $2, $3::jsonb, $4)
+      RETURNING *;
+    `;
+    const { rows } = await pool.query(query, [nombre, grupo_id, JSON.stringify(configuracion), creado_por]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error en service.crearConfiguracion:', error);
+    throw error;
+  }
 };
 
 /**
  * Actualiza una configuración inteligente
  */
 const actualizarConfiguracion = async (id, data) => {
-  const { nombre, grupo_id, configuracion } = data;
-  const query = `
-    UPDATE wfm_auth.configuraciones_inteligentes
-    SET nombre = COALESCE($2, nombre),
-        grupo_id = COALESCE($3, grupo_id),
-        configuracion = COALESCE($4, configuracion),
-        updated_at = NOW()
-    WHERE id = $1
-    RETURNING *;
-  `;
-  const { rows } = await pool.query(query, [id, nombre, grupo_id, JSON.stringify(configuracion)]);
-  return rows[0];
+  try {
+    const { nombre, grupo_id, configuracion } = data;
+    const query = `
+      UPDATE wfm_auth.configuraciones_inteligentes
+      SET nombre = COALESCE($2, nombre),
+          grupo_id = COALESCE($3, grupo_id),
+          configuracion = COALESCE($4::jsonb, configuracion),
+          updated_at = NOW()
+      WHERE id = $1
+      RETURNING *;
+    `;
+    const { rows } = await pool.query(query, [id, nombre, grupo_id, configuracion ? JSON.stringify(configuracion) : null]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error en service.actualizarConfiguracion:', error);
+    throw error;
+  }
 };
 
 /**
  * Elimina una configuración inteligente
  */
 const eliminarConfiguracion = async (id) => {
-  const query = 'DELETE FROM wfm_auth.configuraciones_inteligentes WHERE id = $1 RETURNING *;';
-  const { rows } = await pool.query(query, [id]);
-  return rows[0];
+  try {
+    const query = 'DELETE FROM wfm_auth.configuraciones_inteligentes WHERE id = $1 RETURNING *;';
+    const { rows } = await pool.query(query, [id]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error en service.eliminarConfiguracion:', error);
+    throw error;
+  }
 };
 
 /**
@@ -69,10 +91,17 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
     horas_max_semana = 44 
   } = configuracion;
 
+  if (!empleado_ids || empleado_ids.length === 0) {
+    throw new Error('No se han seleccionado empleados para la programación');
+  }
+
   // 0. Pre-calcular duración de turnos para balanceo
   const turnoHours = turnos.map(t => {
+    if (!t.inicio || !t.fin) return 0;
     const [hI, mI] = t.inicio.split(':').map(Number);
     const [hF, mF] = t.fin.split(':').map(Number);
+    if (isNaN(hI) || isNaN(hF)) return 0;
+    
     let d = hF + (mF/60) - (hI + (mI/60));
     if (d <= 0) d += 24;
     return d;
@@ -83,6 +112,8 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
   empleado_ids.forEach(id => { horasSemanales.set(id, 0); horasTotales.set(id, 0); });
 
   let fechaInicio = DateTime.fromISO(fechaInicioStr, { zone: 'utc' }).startOf('day');
+  if (!fechaInicio.isValid) throw new Error('Fecha de inicio inválida: ' + fechaInicioStr);
+
   let numDias = 7;
   if (periodo === 'quincena') numDias = 15;
   if (periodo === 'mes') {
@@ -122,21 +153,20 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
     const incluirFestivos = configuracion.incluir_festivos ?? true;
     const descansosConsecutivos = configuracion.descansos_consecutivos ?? true;
     
-    const esDiaEspecial = diasDescansoPermitidos.includes(fechaActual.weekday) || (incluirFestivos && esFestivo);
-    const esDiaBloqueable = esSabado || esDomingo; // Solo Sáb/Dom son bloqueables consecutivamente
+    const esDiaEspecial = (Array.isArray(diasDescansoPermitidos) && diasDescansoPermitidos.includes(fechaActual.weekday)) || (incluirFestivos && esFestivo);
+    const esDiaBloqueable = esSabado || esDomingo;
 
     // Detección de inicio de bloque especial (SÓLO Sáb/Dom)
     if (esDiaBloqueable && !enBloqueEspecial && descansosConsecutivos) {
       enBloqueEspecial = true;
       decisionesBloque.clear();
       
-      // Calcular cobertura máxima necesaria para el bloque Sáb-Dom
       let maxCoberturaBloque = 0;
       let cursor = fechaActual;
       while (cursor.weekday === 6 || cursor.weekday === 7) {
         let cob_hoy = empleado_ids.length;
-        if (cursor.weekday === 6) cob_hoy = Math.min(cobertura_sabado, empleado_ids.length);
-        else if (cursor.weekday === 7) cob_hoy = Math.min(cobertura_domingo, empleado_ids.length);
+        if (cursor.weekday === 6) cob_hoy = Math.min(cobertura_sabado ?? empleado_ids.length, empleado_ids.length);
+        else if (cursor.weekday === 7) cob_hoy = Math.min(cobertura_domingo ?? empleado_ids.length, empleado_ids.length);
         
         if (cob_hoy > maxCoberturaBloque) maxCoberturaBloque = cob_hoy;
         cursor = cursor.plus({ days: 1 });
@@ -146,10 +176,9 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
         const segA = bloquesTrabajadosSeguidos.get(a.id) || 0;
         const segB = bloquesTrabajadosSeguidos.get(b.id) || 0;
         if (segA !== segB) return segB - segA;
-
         const hTotA = horasTotales.get(a.id) || 0;
         const hTotB = horasTotales.get(b.id) || 0;
-        return hTotB - hTotA; // El que más horas tiene va primero para DESCANSAR
+        return hTotB - hTotA; 
       });
 
       const numDescansan = Math.max(0, empleado_ids.length - maxCoberturaBloque);
@@ -161,22 +190,17 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
       });
     } else if (!esDiaBloqueable) {
       enBloqueEspecial = false;
-      decisionesBloque.clear();
     }
 
-    // Ordenar empleados (solo para días no bloqueados o festivos independientes)
     const empleadosOrdenados = [...empleados].sort((a, b) => {
-      // Priorizar equidad en FESTIVOS
       if (esFestivo && !esDiaBloqueable) {
         const fA = festivosTrabajados.get(a.id) || 0;
         const fB = festivosTrabajados.get(b.id) || 0;
         if (fA !== fB) return fB - fA; 
       }
-
       const hSemA = horasSemanales.get(a.id) || 0;
       const hSemB = horasSemanales.get(b.id) || 0;
       if (Math.abs(hSemA - hSemB) > 0.1) return hSemA - hSemB;
-
       const hTotA = horasTotales.get(a.id) || 0;
       const hTotB = horasTotales.get(b.id) || 0;
       return hTotA - hTotB;
@@ -187,14 +211,30 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
       let t_inicio, t_fin, tipo = 'turno';
 
       let debeTrabajar = true;
-      if (descansosConsecutivos && enBloqueEspecial && esDiaBloqueable) {
-        debeTrabajar = decisionesBloque.get(empleado.id) === 'turno';
-      } else if (esDiaEspecial) {
-        let coberturaDia = empleado_ids.length;
-        if (esSabado) coberturaDia = Math.min(cobertura_sabado, empleado_ids.length);
-        if (esDomingo) coberturaDia = Math.min(cobertura_domingo, empleado_ids.length);
-        if (esFestivo) coberturaDia = Math.min(cobertura_festivo, empleado_ids.length);
-        debeTrabajar = j < coberturaDia;
+      
+      // Lógica de cobertura para el día actual
+      let coberturaHoy = empleado_ids.length;
+      if (esSabado) coberturaHoy = cobertura_sabado ?? empleado_ids.length;
+      else if (esDomingo) coberturaHoy = cobertura_domingo ?? empleado_ids.length;
+      else if (esFestivo) coberturaHoy = cobertura_festivo ?? empleado_ids.length;
+
+      // Si la cobertura hoy es 0, nadie trabaja pase lo que pase
+      if (esDiaEspecial && (coberturaHoy === 0 || i < 0)) { // (i < 0 es placeholder)
+        debeTrabajar = false;
+      } else {
+        if (descansosConsecutivos && enBloqueEspecial && esDiaBloqueable) {
+          // Si estamos en bloque, primero verificamos si el bloque le dio descanso
+          const statusBloque = decisionesBloque.get(empleado.id);
+          if (statusBloque === 'descanso') {
+            debeTrabajar = false;
+          } else {
+            // Si el bloque le dio turno, verificamos si cabe en el cupo de HOY
+            // (Los empleados ya vienen ordenados por prioridad de equidad)
+            debeTrabajar = j < coberturaHoy;
+          }
+        } else if (esDiaEspecial) {
+          debeTrabajar = j < coberturaHoy;
+        }
       }
 
       let turnoIdx = 0;
@@ -206,11 +246,13 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
         turnoIdx = empleado_ids.indexOf(empleado.id) % turnos.length;
       }
 
-      const duracion = turnoHours[turnoIdx];
+      const duracion = turnoHours[turnoIdx] || 0;
       const currentWeekHrs = horasSemanales.get(empleado.id) || 0;
 
-      if (debeTrabajar && (currentWeekHrs + duracion > horas_max_semana) && esDiaEspecial && !enBloqueEspecial) {
-        debeTrabajar = false;
+      // Restricción de horas semanales max
+      if (debeTrabajar && (currentWeekHrs + duracion > horas_max_semana)) {
+        // Solo quitamos el turno si es un día especial (opcional) o si realmente ya se pasó por mucho
+        if (esDiaEspecial) debeTrabajar = false;
       }
 
       if (!debeTrabajar) {
@@ -219,11 +261,11 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
         tipo = 'descanso';
       } else {
         const turnoSelected = turnos[turnoIdx];
-        const [h_ini, m_ini] = turnoSelected.inicio.split(':');
-        const [h_fin, m_fin] = turnoSelected.fin.split(':');
+        const [h_ini, m_ini] = (turnoSelected.inicio || '08:00').split(':');
+        const [h_fin, m_fin] = (turnoSelected.fin || '17:00').split(':');
 
-        let dt_ini = fechaActual.set({ hour: parseInt(h_ini), minute: parseInt(m_ini), second: 0, millisecond: 0 });
-        let dt_fin = fechaActual.set({ hour: parseInt(h_fin), minute: parseInt(m_fin), second: 0, millisecond: 0 });
+        let dt_ini = fechaActual.set({ hour: parseInt(h_ini) || 0, minute: parseInt(m_ini) || 0, second: 0, millisecond: 0 });
+        let dt_fin = fechaActual.set({ hour: parseInt(h_fin) || 0, minute: parseInt(m_fin) || 0, second: 0, millisecond: 0 });
         if (dt_fin <= dt_ini) dt_fin = dt_fin.plus({ days: 1 });
 
         t_inicio = dt_ini.toJSDate();
@@ -231,28 +273,52 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
 
         horasSemanales.set(empleado.id, currentWeekHrs + duracion);
         horasTotales.set(empleado.id, (horasTotales.get(empleado.id) || 0) + duracion);
-
-        if (esFestivo) {
-          festivosTrabajados.set(empleado.id, (festivosTrabajados.get(empleado.id) || 0) + 1);
-        }
+        if (esFestivo) festivosTrabajados.set(empleado.id, (festivosTrabajados.get(empleado.id) || 0) + 1);
       }
 
       turnosAGenerar.push({
         usuario_id: empleado.id,
         hora_inicio: t_inicio,
         hora_fin: t_fin,
-        tipo: tipo,
-        publicado: false
+        tipo: tipo
       });
     }
   }
 
-  // 3. Insertar masivamente
-  for (const t of turnosAGenerar) {
-    await turnosService.crearTurno(t);
-  }
+  // 3. Inserción Masiva Transaccional
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Antes de generar, limpiar turnos NO publicados en este rango para estos empleados
+    // para evitar conflictos y permitir regenerar
+    await client.query(`
+      DELETE FROM wfm_auth.turnos 
+      WHERE usuario_id = ANY($1) 
+      AND hora_inicio_programada >= $2 
+      AND hora_inicio_programada <= $3
+      AND publicado = false
+    `, [empleado_ids, fechaInicio.toISODate(), fechaInicio.plus({ days: numDias }).toISODate()]);
+    
+    for (const t of turnosAGenerar) {
+      const id = crypto.randomUUID();
+      await client.query(`
+        INSERT INTO wfm_auth.turnos (id, usuario_id, hora_inicio_programada, hora_fin_programada, tipo, publicado)
+        VALUES ($1, $2, $3, $4, $5, false)
+      `, [id, t.usuario_id, t.hora_inicio, t.hora_fin, t.tipo]);
+    }
 
-  return { diasGenerados: numDias, totalTurnos: turnosAGenerar.length };
+    await client.query('COMMIT');
+    turnosSocket.emitActualizacion('masivo', { count: turnosAGenerar.length, source: 'smart-scheduling' });
+    
+    return { diasGenerados: numDias, totalTurnos: turnosAGenerar.length };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error en transacción de generación:', err);
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 module.exports = {

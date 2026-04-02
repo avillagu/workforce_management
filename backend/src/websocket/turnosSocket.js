@@ -9,7 +9,12 @@ let io;
 const init = (server) => {
   io = new Server(server, {
     cors: {
-      origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+      origin: [
+        'http://localhost:4200', 
+        'http://127.0.0.1:4200', 
+        'https://workforceman.vps.webdock.cloud',
+        'http://workforceman.vps.webdock.cloud'
+      ],
       methods: ['GET', 'POST'],
       credentials: true
     }

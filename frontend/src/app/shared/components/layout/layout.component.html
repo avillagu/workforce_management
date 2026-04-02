@@ -2,11 +2,20 @@
   <!-- Sidebar -->
   <app-sidebar></app-sidebar>
 
+  <!-- Mobile Backdrop -->
+  <div class="sidebar-backdrop" 
+       *ngIf="isSidebarExpanded()" 
+       (click)="toggleSidebar()">
+  </div>
+
   <!-- Main Content Area -->
   <div class="main-content" [class.sidebar-collapsed]="!isSidebarExpanded()">
     <!-- Top Header -->
     <header class="top-header">
       <div class="header-left">
+        <button mat-icon-button class="mobile-menu-btn" (click)="toggleSidebar()">
+          <mat-icon>menu</mat-icon>
+        </button>
         <h1 class="page-title">{{ pageTitle() }}</h1>
       </div>
       <div class="header-right">

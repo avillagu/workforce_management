@@ -260,12 +260,13 @@ mat-divider {
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    position: fixed;
+    height: 100vh;
+    z-index: 3000;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.3);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
-    &.collapsed {
-      transform: translateX(-100%);
-    }
-
-    &.mobile-open {
+    &:not(.collapsed) {
       transform: translateX(0);
     }
   }

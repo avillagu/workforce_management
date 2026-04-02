@@ -41,7 +41,12 @@ const loginLimiter = rateLimit({
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+  origin: [
+    'http://localhost:4200', 
+    'http://127.0.0.1:4200', 
+    'https://workforceman.vps.webdock.cloud',
+    'http://workforceman.vps.webdock.cloud'
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -139,7 +144,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     success: false,
     error: 'Error interno del servidor',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+    message: err.message // Expuesto temporalmente para diagnosticar errores de despliegue
   });
 });
 
