@@ -156,6 +156,36 @@ Sistema de gestión de fuerza laboral para pequeñas empresas (hasta 50 empleado
 
 ---
 
+## Despliegue en Producción (VPS Webdock)
+
+El sistema se encuentra desplegado y operativo en un servidor privado virtual (VPS) administrado en **Webdock**.
+
+### Arquitectura del Servidor
+- **Sistema Operativo:** Ubuntu (Webdock VPS).
+- **Base de Datos:** PostgreSQL corriendo de manera nativa (`wfm_db`).
+- **Backend (API):** Ejecutado y monitorizado en segundo plano con **PM2** bajo el nombre de proceso `wfm-api` (puerto local 3000).
+- **Frontend (Angular):** Archivos estáticos de producción compilados y servidos directamente por el servidor web desde el directorio `/var/www/html/`.
+
+### Guía de Actualización (Despliegue Continuo)
+
+**Para actualizar el Frontend:**
+1. Compilar localmente la aplicación (`npm run build`).
+2. Comprimir el contenido de la carpeta resultante (`/dist/wfm-frontend/browser/`) en un `.zip`.
+3. Subir el ZIP al servidor por FTP (p. ej. empleando FileZilla con usuario limitado) directamente a `/var/www/html/`.
+4. En la terminal de Webdock, descomprimir y sobrescribir los archivos antiguos (`sudo unzip -o archivo.zip`).
+5. Borrar el ZIP sobrante y actualizar la caché del navegador (`Ctrl + F5`).
+
+**Para actualizar el Backend:**
+1. Subir por FTP el archivo modificado a la carpeta temporal `/var/www/html/`.
+2. En la terminal de Webdock, mover el archivo a la ruta segura de la aplicación:
+   `sudo mv /var/www/html/archivo.js /home/admin/workforce_management/backend/src/...`
+3. Restablecer propietario/permisos:
+   `sudo chown admin:admin [ruta_del_archivo]`
+4. Reiniciar la API en memoria para aplicar cambios:
+   `pm2 restart wfm-api`
+
+---
+
 ## Estructura del Proyecto
 
 ```
