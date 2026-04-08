@@ -213,13 +213,13 @@ workforce_management/
 │   ├── angular.json
 │   └── package.json
 │
-├── 00_brief.txt
-├── 01_requirements.txt
-├── 02_task_list.txt
-├── architecture.txt
-├── README.md
-└── log.txt
-```
+│
+├── docs/
+│   ├── 00_brief.txt
+│   ├── architecture.txt
+│   └── (Archivos de documentación técnica y bitácoras del proyecto)
+│
+└── README.md
 
 ---
 
@@ -418,13 +418,13 @@ cat backend/.env | findstr DB_PASSWORD
 
 ---
 
-## Próximas Etapas
+## Progreso del Proyecto
 
-- **Etapa 2:** Módulo de Programación de Turnos
-- **Etapa 3:** Módulo de Operación
-- **Etapa 4:** Módulo de Novedades
-- **Etapa 5:** Módulo de Asistencias
-- **Etapa 6:** Reportes y Exportación
+- ✅ **Etapa 1:** Autenticación y Menú Principal
+- ✅ **Etapa 2:** Módulo de Operación (Gestión de Empleados)
+- ✅ **Etapa 3:** Módulo de Programación (Turnos, Calendario, Smart Scheduling y Compensatorios)
+- ✅ **Etapa 4:** Módulo de Novedades y Asistencias
+- ⏳ **Etapa 5:** Reportes y Exportación Avanzada
 
 ---
 
