@@ -1,0 +1,43 @@
+Workforce Management System (WFM) Pro – Gestión de Personal en Tiempo Real & Programación Inteligente
+
+La solución definitiva para pequeñas y medianas empresas (hasta 50 empleados) que buscan optimizar su operación. WFM Pro combina un panel de monitoreo en tiempo real, un motor de programación inteligente y un control de asistencias "Anti-Errores", todo bajo una arquitectura moderna y escalable.
+
+¿Qué hace a este sistema diferente?
+A diferencia de otros gestores básicos, este WFM está diseñado para la operación viva. Permite a los supervisores ver en segundos quién está disponible, quién está en descanso y quién tiene alertas de tiempo excedido, todo gracias a una integración robusta con WebSockets.
+
+Módulos Principales (Lo que estás comprando)
+1. Panel de Monitoreo en Tiempo Real (Live Dashboard)
+Visualización Instantánea: Tabla dinámica que muestra el estado actual de todo el equipo (Disponible, Descanso, Baño, Fuera de Turno).
+Actualizaciones vía WebSockets: Los estados se actualizan sin refrescar la página.
+Alertas Inteligentes: Notificaciones visuales (animaciones pulse) si un empleado supera el tiempo permitido en descanso.
+2. Control de Asistencias y Tiempos
+Panel de Marcación Simplificado: Interfaz amigable para que el empleado registre su jornada con un solo clic.
+Lógica "Anti-Cachos" (UTC-safe): Implementación técnica robusta con la librería Luxon para evitar errores de zona horaria y solapamiento de turnos.
+Historial Detallado: Registro completo de cada movimiento con cálculo automático de duración.
+3. Programación Inteligente & Turnos
+Motor de Plantillas JSON: Configura reglas de cobertura y turnos de forma flexible.
+Gestión de Grupos: Organiza a tu personal por departamentos o equipos operativos.
+Calendario de Festivos Localizado: Incluye lógica avanzada para festivos (ej: Ley Emiliani para Colombia, movibles a lunes), asegurando que la programación siempre sea precisa.
+4. Reportes y Exportación
+Descarga a Excel: Genera reportes de asistencia filtrados por fecha, grupo o empleado con un solo clic, listos para nómina.
+Características Técnicas (Para el Comprador Tech)
+Este proyecto no solo es funcional, es código de alta calidad:
+
+Frontend: Angular 17+ (uso intensivo de Signals, Angular Material y diseño Responsive).
+Backend: Node.js con Express, arquitectura limpia y escalable.
+Base de Datos: PostgreSQL (manejo de transacciones para integridad de datos).
+Seguridad: Autenticación robusta con JWT (JSON Web Tokens) y encriptación Bcrypt.
+Documentación API: Incluye Swagger UI (/api-docs) para que cualquier desarrollador pueda integrar o extender el sistema fácilmente.
+Real-Time: Integración con Socket.IO.
+Beneficios para el Cliente Final
+Ahorro de Tiempo: Automatiza la creación de turnos y el control de horas hombre.
+Reducción de Costos Operativos: Detecta tiempos muertos y ausencias injustificadas en el acto.
+Escalabilidad: Empieza con 5 empleados y crece hasta 50 sin perder rendimiento.
+Fácil Instalación: Incluye scripts de verificación de base de datos (npm run verify) para asegurar que todo funcione antes de iniciar.
+¿Qué se incluye en la descarga?
+Código fuente completo del Backend (Node.js).
+Código fuente completo del Frontend (Angular).
+Scripts SQL detallados para la creación y seeding de la base de datos.
+Colección de documentación técnica y manual de instalación profesional.
+Soporte y Garantía
+Este software ha sido validado bajo estándares de desarrollo modernos, garantizando un código limpio, sin inyecciones SQL y optimizado para entornos de producción.

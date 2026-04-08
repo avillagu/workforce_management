@@ -172,9 +172,10 @@
                           [cdkDragData]="turno"
                           [cdkDragDisabled]="!isAdmin()"
                           [class]="'type-' + (turno.tipo || 'turno')"
+                          [class.is-compensatorio]="turno.es_compensatorio"
                           [class.is-mine]="emp.id === currentUserId()"
                           [class.is-draft]="!turno.publicado"
-                          [matTooltip]="getTurnoLabel(turno) + (!turno.publicado ? ' (BORRADOR)' : '')"
+                          [matTooltip]="getTurnoLabel(turno) + (turno.es_compensatorio ? ' (COMPENSATORIO)' : '') + (!turno.publicado ? ' (BORRADOR)' : '')"
                           (click)="$event.stopPropagation(); isAdmin() ? openVerTurno(turno) : null"
                         >
                           <mat-icon *ngIf="!turno.publicado && isAdmin()" class="draft-indicator">lock_reset</mat-icon>

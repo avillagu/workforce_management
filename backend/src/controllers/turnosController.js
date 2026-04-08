@@ -50,12 +50,12 @@ const getTurnosEmpleado = async (req, res) => {
  */
 const crearTurno = async (req, res) => {
   try {
-    const { usuario_id, hora_inicio, hora_fin, tipo } = req.body;
+    const { usuario_id, hora_inicio, hora_fin, tipo, es_compensatorio } = req.body;
     if (!usuario_id || !hora_inicio || !hora_fin) {
       return res.status(400).json({ success: false, error: 'Campos requeridos faltantes' });
     }
 
-    const nuevoTurno = await turnosService.crearTurno({ usuario_id, hora_inicio, hora_fin, tipo });
+    const nuevoTurno = await turnosService.crearTurno({ usuario_id, hora_inicio, hora_fin, tipo, es_compensatorio });
     res.status(201).json({ success: true, data: nuevoTurno });
   } catch (error) {
     console.error('Error en crearTurno:', error);
@@ -70,13 +70,13 @@ const crearTurno = async (req, res) => {
 const actualizarTurno = async (req, res) => {
   try {
     const { id } = req.params;
-    const { usuario_id, hora_inicio, hora_fin, tipo } = req.body;
+    const { usuario_id, hora_inicio, hora_fin, tipo, es_compensatorio } = req.body;
 
     if (!hora_inicio || !hora_fin) {
       return res.status(400).json({ success: false, error: 'hora_inicio y hora_fin son requeridas' });
     }
 
-    const actualizado = await turnosService.actualizarTurno(id, { usuario_id, hora_inicio, hora_fin, tipo });
+    const actualizado = await turnosService.actualizarTurno(id, { usuario_id, hora_inicio, hora_fin, tipo, es_compensatorio });
     res.json({ success: true, data: actualizado });
   } catch (error) {
     console.error('Error en actualizarTurno:', error);

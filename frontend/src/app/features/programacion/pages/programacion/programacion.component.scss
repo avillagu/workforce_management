@@ -526,6 +526,13 @@
     background: #ecfdf5 !important; 
     color: #065f46 !important;
     mat-icon { color: #10b981; }
+
+    &.is-compensatorio {
+      border-left-color: #8b5cf6 !important; 
+      background: #f5f3ff !important; 
+      color: #5b21b6 !important;
+      mat-icon { color: #8b5cf6 !important; }
+    }
   }
   &.type-permiso { 
     border-left-color: #f59e0b !important; 

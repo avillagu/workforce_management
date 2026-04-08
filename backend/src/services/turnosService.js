@@ -32,13 +32,14 @@ const validarSuperposicion = async (usuario_id, hora_inicio, hora_fin, turno_id_
  */
 const getTurnos = async (fecha_inicio, fecha_fin) => {
   const query = `
-    SELECT t.id, t.usuario_id, t.tipo, t.publicado,
+    SELECT t.id, t.usuario_id, t.tipo, t.es_compensatorio, t.publicado,
            t.hora_inicio_programada as hora_inicio, 
            t.hora_fin_programada as hora_fin, 
            t.created_at, u.full_name, u.username
     FROM wfm_auth.turnos t
     JOIN wfm_auth.usuarios u ON t.usuario_id = u.id
     WHERE t.hora_inicio_programada >= $1 AND t.hora_fin_programada <= $2
+      AND u.username != 'admin'
     ORDER BY t.hora_inicio_programada ASC;
   `;
   const { rows } = await pool.query(query, [fecha_inicio, fecha_fin]);
@@ -50,7 +51,7 @@ const getTurnos = async (fecha_inicio, fecha_fin) => {
  */
 const getTurnosEmpleado = async (usuario_id, fecha_inicio, fecha_fin) => {
   const query = `
-    SELECT t.id, t.usuario_id, t.tipo, t.publicado,
+    SELECT t.id, t.usuario_id, t.tipo, t.es_compensatorio, t.publicado,
            t.hora_inicio_programada as hora_inicio, 
            t.hora_fin_programada as hora_fin, 
            t.created_at, u.full_name, u.username
@@ -79,15 +80,15 @@ const crearTurno = async (data) => {
 
   const id = crypto.randomUUID();
   const query = `
-    INSERT INTO wfm_auth.turnos (id, usuario_id, hora_inicio_programada, hora_fin_programada, tipo, publicado)
-    VALUES ($1, $2, $3, $4, $5, false)
-    RETURNING id, usuario_id, tipo, publicado,
+    INSERT INTO wfm_auth.turnos (id, usuario_id, hora_inicio_programada, hora_fin_programada, tipo, es_compensatorio, publicado)
+    VALUES ($1, $2, $3, $4, $5, $6, false)
+    RETURNING id, usuario_id, tipo, es_compensatorio, publicado,
               hora_inicio_programada as hora_inicio, 
               hora_fin_programada as hora_fin, 
               created_at;
   `;
   
-  const { rows } = await pool.query(query, [id, usuario_id, hora_inicio, hora_fin, tipo]);
+  const { rows } = await pool.query(query, [id, usuario_id, hora_inicio, hora_fin, tipo, data.es_compensatorio || false]);
   const nuevoTurno = rows[0];
   
   turnosSocket.emitActualizacion('crear', nuevoTurno);
@@ -124,15 +125,16 @@ const actualizarTurno = async (id, data) => {
         hora_inicio_programada = $3,
         hora_fin_programada = $4,
         tipo = COALESCE($5, tipo),
+        es_compensatorio = COALESCE($6, es_compensatorio),
         publicado = false
     WHERE id = $1
-    RETURNING id, usuario_id, tipo, publicado,
+    RETURNING id, usuario_id, tipo, es_compensatorio, publicado,
               hora_inicio_programada as hora_inicio, 
               hora_fin_programada as hora_fin, 
               created_at;
   `;
   
-  const { rows } = await pool.query(query, [id, uid, hora_inicio, hora_fin, tipo]);
+  const { rows } = await pool.query(query, [id, uid, hora_inicio, hora_fin, tipo, data.es_compensatorio]);
   const actualizado = rows[0];
   
   turnosSocket.emitActualizacion('actualizar', actualizado);
@@ -219,7 +221,7 @@ const programacionMasiva = async (data) => {
         
         const id = crypto.randomUUID();
         await client.query(
-          'INSERT INTO wfm_auth.turnos (id, usuario_id, hora_inicio_programada, hora_fin_programada, tipo, publicado) VALUES ($1, $2, $3, $4, $5, false)',
+          'INSERT INTO wfm_auth.turnos (id, usuario_id, hora_inicio_programada, hora_fin_programada, tipo, es_compensatorio, publicado) VALUES ($1, $2, $3, $4, $5, false, false)',
           [id, uid, inicioUTC.toISO(), finUTC.toISO(), tipo]
         );
         creados++;
@@ -319,7 +321,7 @@ const moverTurno = async (id, destino_usuario_id, destino_fecha) => {
       UPDATE wfm_auth.turnos 
       SET usuario_id = $2, hora_inicio_programada = $3, hora_fin_programada = $4, publicado = false
       WHERE id = $1
-      RETURNING id, usuario_id, tipo, publicado,
+      RETURNING id, usuario_id, tipo, es_compensatorio, publicado,
                 hora_inicio_programada as hora_inicio, 
                 hora_fin_programada as hora_fin, 
                 created_at;

@@ -28,6 +28,7 @@ const usuarioController = {
           g.nombre as grupo_nombre
         FROM wfm_auth.usuarios u
         LEFT JOIN wfm_auth.grupos g ON u.grupo_id = g.id
+        WHERE u.username != 'admin'
         ORDER BY u.full_name ASC`
       );
 

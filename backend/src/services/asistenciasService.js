@@ -155,7 +155,7 @@ const marcarEstado = async (usuario_id, estado) => {
  * Obtiene historial de asistencias con filtros opcionales.
  */
 const obtenerHistorial = async ({ desde, hasta, grupo_id, usuario_id, limit = 50 }) => {
-  const condiciones = [];
+  const condiciones = ["u.username != 'admin'"];
   const valores = [];
   let idx = 1;
 
@@ -205,7 +205,7 @@ const obtenerHistorial = async ({ desde, hasta, grupo_id, usuario_id, limit = 50
  * Obtiene estados actuales (hora_fin IS NULL). Permite filtrar por grupo o usuario.
  */
 const obtenerEstadosActuales = async (grupo_id = null, usuario_id = null) => {
-  const condiciones = ['a.hora_fin IS NULL'];
+  const condiciones = ['a.hora_fin IS NULL', "u.username != 'admin'"];
   const valores = [];
   let idx = 1;
 

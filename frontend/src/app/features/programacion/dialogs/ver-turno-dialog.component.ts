@@ -88,11 +88,11 @@ export interface VerTurnoData {
               </div>
             </div>
 
-            <div class="info-card">
-              <div class="card-icon"><mat-icon>fingerprint</mat-icon></div>
+            <div class="info-card" *ngIf="turno().tipo === 'descanso' && turno().es_compensatorio">
+              <div class="card-icon highlight-icon"><mat-icon>star</mat-icon></div>
               <div class="card-content">
-                <label>Registro de Creación</label>
-                <p>{{ formatCreated(turno().created_at) }}</p>
+                <label>Tipo de Descanso</label>
+                <p>COMPENSATORIO</p>
               </div>
             </div>
           </div>
@@ -143,6 +143,19 @@ export interface VerTurnoData {
                 <input matInput type="time" formControlName="hora_fin">
                 <mat-error *ngIf="form.hasError('horaInvalida')">El fin debe ser posterior</mat-error>
               </mat-form-field>
+            </div>
+
+            <!-- Opción Compensatorio (Solo si es Descanso) -->
+            <div class="compensatorio-toggle-section animated-fade" *ngIf="form.get('tipo')?.value === 'descanso'">
+              <div class="toggle-card" [class.active]="form.get('es_compensatorio')?.value" (click)="toggleCompensatorio()">
+                <div class="toggle-info">
+                  <span class="t-label">¿Es descanso compensatorio?</span>
+                  <span class="t-hint">Se restará del acumulado de domingos trabajados</span>
+                </div>
+                <div class="toggle-action">
+                  <mat-icon>{{ form.get('es_compensatorio')?.value ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                </div>
+              </div>
             </div>
           </section>
         </form>
@@ -230,6 +243,20 @@ export interface VerTurnoData {
     .time-grid-individual { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
     .full-width { width: 100%; }
 
+    .highlight-icon { background: #eff6ff !important; color: #3b82f6 !important; }
+    
+    .compensatorio-toggle-section { margin-top: 16px; }
+    .toggle-card {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0;
+      cursor: pointer; transition: all 0.2s; background: #f8fafc;
+    }
+    .toggle-card.active { border-color: #2563eb; background: #eff6ff; .t-label { color: #1e40af; } .toggle-action mat-icon { color: #2563eb; } }
+    .toggle-info { display: flex; flex-direction: column; }
+    .t-label { font-size: 13px; font-weight: 700; color: #475569; }
+    .t-hint { font-size: 11px; color: #64748b; }
+    .toggle-action mat-icon { font-size: 24px; width: 24px; height: 24px; color: #cbd5e1; }
+
     .dialog-actions { padding: 16px 24px; background: white; border-top: 1px solid var(--border); display: flex; gap: 12px; }
     .button-group { display: flex; gap: 10px; width: 100%; justify-content: flex-end; }
 
@@ -257,6 +284,7 @@ export class VerTurnoDialogComponent {
     usuario_id: [this.data.turno.usuario_id, Validators.required],
     fecha: [DateTime.fromISO(this.data.turno.hora_inicio).toJSDate(), Validators.required],
     tipo: [this.data.turno.tipo as TipoTurno, Validators.required],
+    es_compensatorio: [this.data.turno.es_compensatorio ?? false],
     hora_inicio: [this.extractTime(this.data.turno.hora_inicio), Validators.required],
     hora_fin: [this.extractTime(this.data.turno.hora_fin), Validators.required]
   }, { validators: this.validarHoras });
@@ -300,6 +328,14 @@ export class VerTurnoDialogComponent {
 
   setTipo(tipo: string): void {
     this.form.get('tipo')?.setValue(tipo as TipoTurno);
+    if (tipo !== 'descanso') {
+      this.form.get('es_compensatorio')?.setValue(false);
+    }
+  }
+
+  toggleCompensatorio(): void {
+    const current = this.form.get('es_compensatorio')?.value;
+    this.form.get('es_compensatorio')?.setValue(!current);
   }
 
   onDelete(): void {
@@ -333,7 +369,8 @@ export class VerTurnoDialogComponent {
       usuario_id: usuario_id,
       hora_inicio: startUtc,
       hora_fin: endUtc,
-      tipo: tipo as TipoTurno
+      tipo: tipo as TipoTurno,
+      es_compensatorio: tipo === 'descanso' ? this.form.get('es_compensatorio')?.value : false
     };
 
     this.turnosService.actualizarTurno(this.turno().id, payload).subscribe({

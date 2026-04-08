@@ -303,8 +303,8 @@ const generarProgramacion = async (configData, fechaInicioStr) => {
     for (const t of turnosAGenerar) {
       const id = crypto.randomUUID();
       await client.query(`
-        INSERT INTO wfm_auth.turnos (id, usuario_id, hora_inicio_programada, hora_fin_programada, tipo, publicado)
-        VALUES ($1, $2, $3, $4, $5, false)
+        INSERT INTO wfm_auth.turnos (id, usuario_id, hora_inicio_programada, hora_fin_programada, tipo, es_compensatorio, publicado)
+        VALUES ($1, $2, $3, $4, $5, false, false)
       `, [id, t.usuario_id, t.hora_inicio, t.hora_fin, t.tipo]);
     }
 

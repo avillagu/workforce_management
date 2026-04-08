@@ -9,11 +9,13 @@ const getStats = async () => {
   
   // 2. Empleados activos (con sesión de asistencia abierta en estados productivos de las últimas 24h)
   const activosQuery = `
-    SELECT COUNT(DISTINCT usuario_id) 
-    FROM wfm_auth.asistencias 
-    WHERE hora_fin IS NULL 
-    AND estado IN ('disponible', 'descanso', 'en_bano')
-    AND hora_inicio > (NOW() - INTERVAL '24 hours')
+    SELECT COUNT(DISTINCT a.usuario_id) 
+    FROM wfm_auth.asistencias a
+    JOIN wfm_auth.usuarios u ON a.usuario_id = u.id
+    WHERE a.hora_fin IS NULL 
+    AND a.estado IN ('disponible', 'descanso', 'en_bano')
+    AND a.hora_inicio > (NOW() - INTERVAL '24 hours')
+    AND u.username != 'admin'
   `;
   
   // 3. Novedades/Solicitudes pendientes

@@ -16,6 +16,7 @@ interface EmpleadoResumen {
   festivosTrabajados: number;
   horasNocturnas: number;
   descansos: number;
+  compensatorios: number;
   incapacidades: number;
 }
 
@@ -28,7 +29,7 @@ interface EmpleadoResumen {
       <div class="summary-grid">
         <div class="summary-card total">
           <mat-icon>timer</mat-icon>
-          <div class="val">{{ totalHours() }}</div>
+          <div class="val">{{ totalHours().toFixed(1) }}</div>
           <div class="lab">Horas Programadas</div>
         </div>
         <div class="summary-card sun">
@@ -60,7 +61,7 @@ interface EmpleadoResumen {
 
           <ng-container matColumnDef="horas">
             <th mat-header-cell *matHeaderCellDef> Hrs Totales </th>
-            <td mat-cell *matCellDef="let row" class="val-cell"> {{ row.horasRegistradas }}h </td>
+            <td mat-cell *matCellDef="let row" class="val-cell"> {{ row.horasRegistradas.toFixed(1) }}h </td>
           </ng-container>
 
           <ng-container matColumnDef="domingos">
@@ -83,6 +84,13 @@ interface EmpleadoResumen {
           <ng-container matColumnDef="descansos">
             <th mat-header-cell *matHeaderCellDef> Descansos </th>
             <td mat-cell *matCellDef="let row" class="val-cell"> {{ row.descansos }} </td>
+          </ng-container>
+          
+          <ng-container matColumnDef="compensatorios">
+            <th mat-header-cell *matHeaderCellDef> Compensatorio </th>
+            <td mat-cell *matCellDef="let row" class="val-cell" [class.highlight]="row.compensatorios > 0"> 
+               {{ row.compensatorios }} 
+            </td>
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -133,7 +141,7 @@ export class ConsolidadoComponent {
   turnos = input<Turno[]>([]);
   empleados = input<Empleado[]>([]);
 
-  displayedColumns: string[] = ['nombre', 'horas', 'domingos', 'festivos', 'nocturnas', 'descansos'];
+  displayedColumns: string[] = ['nombre', 'horas', 'domingos', 'festivos', 'nocturnas', 'descansos', 'compensatorios'];
 
   resumen = computed(() => {
     const allTurnos = this.turnos();
@@ -156,7 +164,7 @@ export class ConsolidadoComponent {
         if (t.tipo === 'turno') {
           totalHrs += diff;
           
-          // Dominical?
+          // Dominical? (Acumula compensatorio)
           if (start.weekday === 7) domTrab++;
           else if (ColombiaHolidays.isHoliday(start)) festTrab++;
 
@@ -165,18 +173,24 @@ export class ConsolidadoComponent {
 
         } else if (t.tipo === 'descanso') {
           desCount++;
+          // Si es un descanso marcado como compensatorio, se restará después
         }
       });
+
+      // Cálculo de compensatorios: domingos trabajados - descansos compensatorios
+      const compensatoriosTomados = turnosEmp.filter(t => t.tipo === 'descanso' && !!t.es_compensatorio).length;
+      const compensatoriosBalance = domTrab - compensatoriosTomados;
 
       return {
         id: emp.id,
         nombre: emp.nombre_completo,
         username: emp.username,
-        horasRegistradas: Math.round(totalHrs),
+        horasRegistradas: totalHrs,
         domingosTrabajados: domTrab,
         festivosTrabajados: festTrab,
         horasNocturnas: noctHrs,
         descansos: desCount,
+        compensatorios: compensatoriosBalance,
         incapacidades: 0 // TODO
       };
     });

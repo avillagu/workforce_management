@@ -131,6 +131,19 @@ export interface ProgramarTurnoData {
                 <mat-error>La fecha es obligatoria</mat-error>
               </mat-form-field>
             </div>
+
+            <!-- Opción Compensatorio (Solo si es Descanso) -->
+            <div class="compensatorio-toggle-section animated-fade" *ngIf="form.get('tipo')?.value === 'descanso'">
+              <div class="toggle-card" [class.active]="form.get('es_compensatorio')?.value" (click)="toggleCompensatorio()">
+                <div class="toggle-info">
+                  <span class="t-label">¿Es descanso compensatorio?</span>
+                  <span class="t-hint">Se restará del acumulado de domingos trabajados</span>
+                </div>
+                <div class="toggle-action">
+                  <mat-icon>{{ form.get('es_compensatorio')?.value ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                </div>
+              </div>
+            </div>
           </section>
 
           <!-- Paso 3: Horario (Solo si es tipo turno) -->
@@ -315,6 +328,18 @@ export interface ProgramarTurnoData {
       font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s;
     }
     .preset-chip:hover { background: #eff6ff; border-color: #3b82f6; color: #2563eb; }
+    
+    .compensatorio-toggle-section { margin-top: 16px; }
+    .toggle-card {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0;
+      cursor: pointer; transition: all 0.2s; background: #f8fafc;
+    }
+    .toggle-card.active { border-color: #2563eb; background: #eff6ff; .t-label { color: #1e40af; } .toggle-action mat-icon { color: #2563eb; } }
+    .toggle-info { display: flex; flex-direction: column; }
+    .t-label { font-size: 13px; font-weight: 700; color: #475569; }
+    .t-hint { font-size: 11px; color: #64748b; }
+    .toggle-action mat-icon { font-size: 24px; width: 24px; height: 24px; color: #cbd5e1; }
 
     .dialog-actions {
       padding: 16px 24px; background: white; border-top: 1px solid var(--border);
@@ -355,6 +380,7 @@ export class ProgramarTurnoDialogComponent implements OnInit {
       Validators.required
     ],
     tipo: [(this.data.turno?.tipo as TipoTurno) ?? 'turno', Validators.required],
+    es_compensatorio: [this.data.turno?.es_compensatorio ?? false],
     hora_inicio: [this.data.turno ? this.extractTime(this.data.turno.hora_inicio) : '08:00', Validators.required],
     hora_fin: [this.data.turno ? this.extractTime(this.data.turno.hora_fin) : '17:00', Validators.required]
   }, { validators: this.validarHoras });
@@ -368,6 +394,15 @@ export class ProgramarTurnoDialogComponent implements OnInit {
 
   setTipo(tipo: string): void {
     this.form.get('tipo')?.setValue(tipo as TipoTurno);
+    // Si no es descanso, resetear compensatorio
+    if (tipo !== 'descanso') {
+      this.form.get('es_compensatorio')?.setValue(false);
+    }
+  }
+
+  toggleCompensatorio(): void {
+    const current = this.form.get('es_compensatorio')?.value;
+    this.form.get('es_compensatorio')?.setValue(!current);
   }
 
   getSelectedEmpleadoName(): string {
@@ -412,7 +447,8 @@ export class ProgramarTurnoDialogComponent implements OnInit {
       usuario_id: usuario_id,
       hora_inicio: startUtc,
       hora_fin: endUtc,
-      tipo: tipo as TipoTurno
+      tipo: tipo as TipoTurno,
+      es_compensatorio: tipo === 'descanso' ? this.form.get('es_compensatorio')?.value : false
     };
 
     const request$ = this.data.turno

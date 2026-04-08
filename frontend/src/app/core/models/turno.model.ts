@@ -7,6 +7,7 @@ export interface Turno {
   hora_inicio: string; // ISO 8601 UTC
   hora_fin: string;    // ISO 8601 UTC
   tipo?: TipoTurno;
+  es_compensatorio?: boolean;
   publicado: boolean;
   created_at: string;
 }
@@ -22,6 +23,7 @@ export interface TurnoPayload {
   hora_inicio: string;
   hora_fin: string;
   tipo?: TipoTurno;
+  es_compensatorio?: boolean;
 }
 
 export interface ProgramacionMasivaDto {
